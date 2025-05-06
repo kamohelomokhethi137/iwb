@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaGoogle, FaUserPlus, FaCheckCircle, FaUserShield, FaUserTie, FaUserCog } from 'react-icons/fa';
+import { FaGoogle, FaUserPlus, FaUserShield, FaUserTie, FaUserCog, FaEnvelope, FaSpinner } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import SecurityBubbles from './animation/SecurityBubbles';
 
 const Signup = () => {
-  // Define available roles based on IWB requirements
+  const navigate = useNavigate();
+  
+  // Define available roles
   const ROLES = {
     SALES: 'sales',
     FINANCE: 'finance',
-    // DEVELOPER: 'developer',
     INVESTOR: 'investor',
     PARTNER: 'partner',
     CLIENT: 'client'
@@ -19,7 +22,6 @@ const Signup = () => {
   const ROLE_DESCRIPTIONS = {
     [ROLES.SALES]: 'Sales Personnel (Max 3) - Can access sales records',
     [ROLES.FINANCE]: 'Finance Personnel (Max 3) - Can access income statements',
-    // [ROLES.DEVELOPER]: 'Developer (Max 3) - Full system access',
     [ROLES.INVESTOR]: 'Investor - Read-only income statements',
     [ROLES.PARTNER]: 'Partner - Full solution access (except queries)',
     [ROLES.CLIENT]: 'Client - Can submit queries'
@@ -30,7 +32,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: ROLES.CLIENT // Default role
+    role: ROLES.CLIENT
   });
 
   const [errors, setErrors] = useState({});
@@ -39,11 +41,9 @@ const Signup = () => {
   const [roleCounts, setRoleCounts] = useState(null);
   const fullNameRef = useRef(null);
 
-  // Auto-focus on first input
   useEffect(() => {
     fullNameRef.current.focus();
     
-    // Fetch current role counts to enforce limits
     const fetchRoleCounts = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/auth/role-counts');
@@ -73,7 +73,6 @@ const Signup = () => {
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!formData.role) newErrors.role = 'Role is required';
     
-    // Check role limits if counts are available
     if (roleCounts) {
       const role = formData.role;
       const currentCount = roleCounts[role] || 0;
@@ -94,15 +93,12 @@ const Signup = () => {
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      
-      // Focus on the first field with error
       const firstErrorField = Object.keys(newErrors)[0];
       if (firstErrorField === 'fullName') fullNameRef.current.focus();
       else if (firstErrorField === 'email') e.target.email.focus();
       else if (firstErrorField === 'password') e.target.password.focus();
       else if (firstErrorField === 'confirmPassword') e.target.confirmPassword.focus();
       else if (firstErrorField === 'role') e.target.role.focus();
-      
       return;
     }
 
@@ -115,13 +111,10 @@ const Signup = () => {
         role: formData.role
       });
 
-      console.log('Signup successful:', response.data);
-      
-      // Show success notification
       toast.success(
         <div className="flex items-center">
-          <FaCheckCircle className="text-green-500 mr-2" size={20} />
-          <span>Account created successfully! {formData.role === ROLES.CLIENT ? 'You can now submit queries.' : 'Waiting for admin approval.'}</span>
+          <FaEnvelope className="text-blue-500 mr-2" size={20} />
+          <span>Account created! Check your email to confirm your account.</span>
         </div>,
         {
           position: "top-center",
@@ -130,18 +123,15 @@ const Signup = () => {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
-          progress: undefined,
         }
       );
       
       setSignupSuccess(true);
       
-      // Redirect after delay (clients go to query page, others to dashboard)
       setTimeout(() => {
-        const redirectPath = '/login'; // for now
-        window.location.href = redirectPath;
+        navigate('/email-confirmation', { state: { email: formData.email } });
       }, 3000);
-      //ok
+
     } catch (err) {
       console.error('Signup failed:', err.response?.data || err.message);
       if (err.response?.data?.message === 'Email already registered') {
@@ -169,14 +159,16 @@ const Signup = () => {
     switch(role) {
       case ROLES.SALES: return <FaUserTie className="mr-2" />;
       case ROLES.FINANCE: return <FaUserShield className="mr-2" />;
-      case ROLES.DEVELOPER: return <FaUserCog className="mr-2" />;
+      case ROLES.INVESTOR: return <FaUserCog className="mr-2" />;
       default: return <FaUserPlus className="mr-2" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 relative">
       <ToastContainer />
+      <SecurityBubbles />
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -184,14 +176,12 @@ const Signup = () => {
       >
         {signupSuccess ? (
           <div className="text-center py-8">
-            <div className="mx-auto w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
-              <FaCheckCircle className="text-green-500 dark:text-green-400 text-4xl" />
+            <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
+              <FaEnvelope className="text-blue-500 dark:text-blue-400 text-4xl" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Account Created!</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Check Your Email!</h1>
             <p className="text-gray-600 dark:text-gray-400">
-              {formData.role === ROLES.CLIENT 
-                ? "You can now submit your queries." 
-                : "Your account is pending admin approval."}
+              We've sent a confirmation link to {formData.email}. Please verify your email to complete registration.
             </p>
           </div>
         ) : (
@@ -200,13 +190,12 @@ const Signup = () => {
               <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
                 <FaUserPlus className="text-blue-600 dark:text-blue-400 text-3xl" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Create an IWB Account</h1>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Create an Account</h1>
               <p className="text-gray-600 dark:text-gray-400">Select your role to get started</p>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              {/* Full Name Field */}
-              <div className="mb-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
                 <input
                   ref={fullNameRef}
@@ -215,13 +204,12 @@ const Signup = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
-                  placeholder="name lastname"
+                  placeholder="kamohelo mokhethi"
                 />
                 {errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
               </div>
 
-              {/* Email Field */}
-              <div className="mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
                 <input
                   type="email"
@@ -229,13 +217,12 @@ const Signup = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
-                  placeholder="you@email.com"
+                  placeholder="you@example.com"
                 />
                 {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
               </div>
 
-              {/* Password Field */}
-              <div className="mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                 <input
                   type="password"
@@ -248,8 +235,7 @@ const Signup = () => {
                 {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
               </div>
 
-              {/* Confirm Password */}
-              <div className="mb-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
                 <input
                   type="password"
@@ -262,8 +248,7 @@ const Signup = () => {
                 {errors.confirmPassword && <p className="text-sm text-red-600 mt-1">{errors.confirmPassword}</p>}
               </div>
 
-              {/* Role Selection */}
-              <div className="mb-6">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Select Your Role</label>
                 <select
                   name="role"
@@ -274,9 +259,8 @@ const Signup = () => {
                   <option value={ROLES.CLIENT}>Client</option>
                   <option value={ROLES.SALES}>Sales Personnel</option>
                   <option value={ROLES.FINANCE}>Finance Personnel</option>
-                  {/* <option value={ROLES.DEVELOPER}>Developer</option> */}
                   <option value={ROLES.INVESTOR}>Investor</option>
-                  <option value={ROLES.PARTNER}>Partner (IWC)</option>
+                  <option value={ROLES.PARTNER}>Partner</option>
                 </select>
                 {errors.role && <p className="text-sm text-red-600 mt-1">{errors.role}</p>}
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -284,7 +268,6 @@ const Signup = () => {
                 </p>
               </div>
 
-              {/* Submit */}
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
@@ -292,18 +275,26 @@ const Signup = () => {
                 whileTap={{ scale: 0.98 }}
                 className={`w-full px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium shadow-md hover:shadow-lg transition-all flex items-center justify-center ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {isSubmitting ? 'Creating Account...' : (<>{getRoleIcon(formData.role)} Sign Up</>)}
+                {isSubmitting ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    {getRoleIcon(formData.role)}
+                    Sign Up
+                  </>
+                )}
               </motion.button>
             </form>
 
-            {/* OR divider */}
             <div className="flex items-center my-6">
               <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
               <span className="px-3 text-gray-500 dark:text-gray-400 text-sm">OR</span>
               <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
             </div>
 
-            {/* Google Auth (for clients only) */}
             <motion.button
               onClick={handleGoogleSignup}
               whileHover={{ scale: 1.02 }}

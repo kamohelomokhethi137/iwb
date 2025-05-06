@@ -15,7 +15,9 @@ import InvestorDashboard from './components/InvestorDashboard';
 import DeveloperDashboard from './components/DeveloperDashboard';
 import IWCDashboard from './components/IWCDashboard';
 import PageNotFound from './components/PageNotFound';
+import EmailConfirmation from './components/EmailConfirmation';
 import { AuthProvider } from './components/Layout/authContext';
+import VerificationAccount from './components/VerificationAccount';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -24,7 +26,7 @@ createRoot(document.getElementById('root')).render(
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       autoHideDuration={3000}
     >
-      <AuthProvider> {/* ✅ Wrap everything here */}
+      <AuthProvider> 
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<App />} />
@@ -32,12 +34,14 @@ createRoot(document.getElementById('root')).render(
             <Route path="/aboutus" element={<AboutUs />} />
             <Route path="/services" element={<Services />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/sales" element={<SalesDashboard />} />
-            <Route path="/finance" element={<FinanceDashboard />} />
+            <Route path="/sales-dashboard" element={<SalesDashboard />} />
+            <Route path="/finance-dashboard" element={<FinanceDashboard />} />
             <Route path="/iwc" element={<IWCDashboard />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/investors" element={<InvestorDashboard />} />
+            <Route path="/email-confirmation" element={<EmailConfirmation />} />
+            <Route path="/auth/verify-email" element={<VerificationAccount />} />
+            <Route path="/investor-portal" element={<InvestorDashboard />} />
             <Route path="/developer" element={<DeveloperDashboard />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>

@@ -108,13 +108,13 @@ const Login = () => {
       // Enhanced role-based navigation
       setTimeout(() => {
         const dashboardPaths = {
-          admin: '/admin/dashboard',
+          // admin: '/admin/dashboard',
           sales: '/sales-dashboard',
           finance: '/finance-dashboard',
           investor: '/investor-portal',
           partner: '/partner-portal',
           developer: '/developer',
-          client: '/client-dashboard'
+          // client: '/client-dashboard'
         };
 
         navigate(dashboardPaths[user.role] || '/dashboard');
@@ -129,7 +129,7 @@ const Login = () => {
           errorMessage = 'Invalid email or password';
           setErrors({ password: errorMessage });
         } else if (err.response.status === 403) {
-          errorMessage = 'Account pending admin approval';
+          errorMessage = 'verification required. Please check your email.';
         } else if (err.response.status === 404) {
           errorMessage = 'Login endpoint not found';
         } else {

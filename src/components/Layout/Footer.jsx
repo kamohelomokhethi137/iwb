@@ -29,7 +29,7 @@ const Footer = ({ toggleDarkMode, darkMode }) => {
                         <ul className="space-y-2">
                             {[
                                 { path: "/", label: "Home" },
-                                { path: "/about", label: "About" },
+                                { path: "/aboutus", label: "About" },
                                 { path: "/services", label: "Services" },
                                 { path: "/contact", label: "Contact" }
                             ].map((link) => (
