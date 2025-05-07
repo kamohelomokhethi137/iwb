@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
 import { baseUrl } from '../utils/service';
-
+ 
 const VerificationAccount = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
