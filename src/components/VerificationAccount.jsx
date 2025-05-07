@@ -18,7 +18,7 @@ const VerificationAccount = () => {
     if (!email) return;
 
     try {
-      await axios.post('https://iwb-server.onrender.com/api/auth/resend-confirmation', { email });
+      await axios.post('https://iwb-liard.vercel.app/api/auth/resend-confirmation', { email });
 
       enqueueSnackbar(
         <span className="flex items-center">
