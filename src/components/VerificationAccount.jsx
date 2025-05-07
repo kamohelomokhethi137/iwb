@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { FaEnvelope, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import Particles from 'react-particles-js';
+import Particles from "react-tsparticles";
 import { baseUrl } from '../utils/service';
 
 //demo
