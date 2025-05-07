@@ -38,38 +38,25 @@ const componentImages = [
   }
 ];
 
-// Animation variants extracted for reusability
-const containerVariants = {
+// Simplified animation variants
+const fadeIn = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3
-    }
-  }
+  visible: { opacity: 1, transition: { duration: 0.6 } }
 };
 
-const itemVariants = {
+const slideUp = {
   hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 10
-    }
-  }
+  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
 };
 
-// Feature component to avoid repetition
+// Feature component with simplified animation
 const FeatureCard = ({ icon, title, description, index }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay: index * 0.1 }}
-    viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+    variants={fadeIn}
+    transition={{ delay: index * 0.1 }}
     className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-teal-300 border border-transparent"
   >
     <div className="mb-4">
@@ -86,12 +73,10 @@ const FeatureCard = ({ icon, title, description, index }) => (
 
 const LandingPage = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
 
   // Check for saved theme preference
   useEffect(() => {
-    setIsVisible(true);
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       setDarkMode(true);
@@ -103,12 +88,12 @@ const LandingPage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage(prev => (prev + 1) % componentImages.length);
-    }, 4000); // Increased interval for better UX
+    }, 5000); // Increased interval for better performance
     
     return () => clearInterval(interval);
   }, []);
 
-  // Memoized toggle function to prevent unnecessary rerenders
+  // Memoized toggle function
   const toggleDarkMode = useCallback(() => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -116,7 +101,7 @@ const LandingPage = () => {
     document.documentElement.classList.toggle('dark', newMode);
   }, [darkMode]);
 
-  // Handle image change with keyboard accessibility
+  // Handle image change
   const handleImageChange = useCallback((index) => {
     setCurrentImage(index);
   }, []);
@@ -133,7 +118,7 @@ const LandingPage = () => {
         >
           {/* Background image with lazy loading */}
           <div className="absolute inset-0 overflow-hidden">
-            <AnimatePresence initial={false}>
+            <AnimatePresence mode="wait">
               <motion.img
                 key={componentImages[currentImage].id}
                 src={componentImages[currentImage].src}
@@ -143,7 +128,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.8 }}
+                transition={{ duration: 0.5 }}
               />
             </AnimatePresence>
           </div>
@@ -154,12 +139,12 @@ const LandingPage = () => {
             aria-hidden="true"
           />
 
-          <div className="relative z-10 container mx-auto px-6 lg:px-8 max-w-7xl">
+          <div className="relative z-10 container mx-auto px-6 lg:px-8 max-w-7xl text-center">
             <motion.div
               initial="hidden"
-              animate={isVisible ? "visible" : "hidden"}
-              variants={containerVariants}
-              className="text-center"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeIn}
             >
               <h1 
                 id="hero-heading"
@@ -169,7 +154,7 @@ const LandingPage = () => {
               </h1>
 
               <motion.p
-                variants={itemVariants}
+                variants={slideUp}
                 className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-10"
               >
                 Innovative Wealth Builders is transforming electronic recycling in Southern Africa,
@@ -177,19 +162,20 @@ const LandingPage = () => {
               </motion.p>
 
               <motion.div
-                variants={itemVariants}
+                variants={slideUp}
+                transition={{ delay: 0.2 }}
                 className="flex flex-col sm:flex-row justify-center gap-4"
               >
                 <Link
                   to="/services"
-                  className="px-8 py-3 bg-white hover:bg-gray-100 text-teal-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-teal-500"
+                  className="px-8 py-3 bg-white hover:bg-gray-100 text-teal-600 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
                   aria-label="Learn about our recycling services"
                 >
                   Our Recycling Services
                 </Link>
                 <Link
                   to="/aboutus"
-                  className="px-8 py-3 border-2 border-white text-white hover:bg-white/10 font-medium rounded-lg transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-teal-500"
+                  className="px-8 py-3 border-2 border-white text-white hover:bg-white/10 font-medium rounded-lg transition-all duration-300"
                   aria-label="Learn our story"
                 >
                   Our Story
@@ -207,10 +193,10 @@ const LandingPage = () => {
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+                variants={slideUp}
               >
                 <h2 
                   id="about-heading"
@@ -235,10 +221,11 @@ const LandingPage = () => {
               </motion.div>
               
               <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+                variants={slideUp}
+                transition={{ delay: 0.2 }}
                 className="relative"
               >
                 {/* Image Carousel Container */}
@@ -246,7 +233,7 @@ const LandingPage = () => {
                   className="bg-gradient-to-br from-teal-100 to-blue-100 dark:from-gray-700 dark:to-gray-600 aspect-w-16 aspect-h-9 rounded-xl overflow-hidden shadow-lg relative h-64 md:h-80 lg:h-96"
                   aria-label="Components we recycle carousel"
                 >
-                  <AnimatePresence initial={false}>
+                  <AnimatePresence mode="wait">
                     <motion.div
                       key={componentImages[currentImage].id}
                       initial={{ opacity: 0 }}
@@ -266,15 +253,6 @@ const LandingPage = () => {
                       </div>
                     </motion.div>
                   </AnimatePresence>
-                  
-                  {/* Fallback icon if no images loaded */}
-                  {componentImages.length === 0 && (
-                    <div className="absolute inset-0 w-full h-full flex items-center justify-center">
-                      <svg className="w-1/2 h-1/2 text-teal-500 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    </div>
-                  )}
                 </div>
                 
                 {/* Components label */}
@@ -317,10 +295,10 @@ const LandingPage = () => {
         >
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeIn}
               className="text-center mb-16"
             >
               <h2 
@@ -422,10 +400,10 @@ const LandingPage = () => {
         >
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl text-center">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeIn}
             >
               <h2 
                 id="cta-heading"
@@ -439,14 +417,14 @@ const LandingPage = () => {
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link 
                   to="/contact"
-                  className="px-8 py-3 bg-white text-teal-600 hover:bg-gray-50 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
+                  className="px-8 py-3 bg-white text-teal-600 hover:bg-gray-50 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                   aria-label="Contact us to get started"
                 >
                   Get Started
                 </Link>
                 <Link 
                   to="/about"
-                  className="px-8 py-3 bg-transparent border-2 border-white text-white hover:bg-white/10 font-medium rounded-lg transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
+                  className="px-8 py-3 bg-transparent border-2 border-white text-white hover:bg-white/10 font-medium rounded-lg transition-all duration-300"
                   aria-label="Learn more about our company"
                 >
                   Learn More
