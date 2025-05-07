@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Particles from 'react-particles-js';
 import { baseUrl } from '../utils/service';
 
+//demo
+
 const VerificationAccount = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
