@@ -46,7 +46,7 @@ const Signup = () => {
     
     const fetchRoleCounts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/role-counts');
+        const response = await axios.get('https://iwb-server.onrender.com/api/auth/role-counts');
         setRoleCounts(response.data);
       } catch (err) {
         console.error('Failed to fetch role counts:', err);
@@ -104,7 +104,7 @@ const Signup = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signup', {
+      const response = await axios.post('https://iwb-server.onrender.com/api/auth/signup', {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -152,7 +152,7 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = 'https://iwb-server.onrender.com/api/auth/google';
   };
 
   const getRoleIcon = (role) => {

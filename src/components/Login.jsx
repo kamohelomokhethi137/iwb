@@ -77,7 +77,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('https://iwb-server.onrender.com/api/auth/login', {
         email: formData.email,
         password: formData.password
       });
@@ -147,7 +147,7 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = 'https://iwb-server.onrender.com/api/auth/google';
   };
 
   // Animation variants

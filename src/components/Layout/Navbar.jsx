@@ -39,7 +39,9 @@ function Navbar() {
     { path: "/", label: "Home" },
     { path: "/aboutus", label: "About" },
     { path: "/services", label: "Services" },
+    { path: "/products", label: "Products" },
     { path: "/contact", label: "Contact" }
+
   ];
 
   // Role-specific navigation links

@@ -18,6 +18,7 @@ import PageNotFound from './components/PageNotFound';
 import EmailConfirmation from './components/EmailConfirmation';
 import { AuthProvider } from './components/Layout/authContext';
 import VerificationAccount from './components/VerificationAccount';
+import ProductsPage from './components/ProductsPage';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -39,6 +40,7 @@ createRoot(document.getElementById('root')).render(
             <Route path="/iwc" element={<IWCDashboard />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/products" element={<ProductsPage />} />
             <Route path="/email-confirmation" element={<EmailConfirmation />} />
             <Route path="/auth/verify-email" element={<VerificationAccount />} />
             <Route path="/investor-portal" element={<InvestorDashboard />} />

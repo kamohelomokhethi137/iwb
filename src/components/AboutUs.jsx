@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import recycle from '../assets/recycle.png';
+import aboutUsImage from '../assets/about.jpg';
 import Navbar from './Layout/Navbar';
 
 const AboutUs = () => {
@@ -135,7 +136,7 @@ const AboutUs = () => {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-teal-100 to-blue-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                 <motion.img
-                  src="../assets/3.jpg" 
+                  src={aboutUsImage} 
                   className="w-full h-full object-cover"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
