@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
+import { baseUrl } from '../utils/service';
 
 const VerificationAccount = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const VerificationAccount = () => {
     if (!email) return;
 
     try {
-      await axios.post('https://iwb-liard.vercel.app/api/auth/resend-confirmation', { email });
+      await axios.post(`${baseUrl}/api/auth/resend-confirmation`, { email });
 
       enqueueSnackbar(
         <span className="flex items-center">
@@ -55,7 +56,7 @@ const VerificationAccount = () => {
 
     setLoading(true);
     try {
-      const result = await axios.patch('https://iwb-liard.vercel.app/api/auth/confirm-email', {
+      const result = await axios.patch(`${baseUrl}/api/auth/confirm-email`, {
         emailToken,
         email
       });

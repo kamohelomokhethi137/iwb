@@ -6,6 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import SecurityBubbles from './animation/SecurityBubbles';
+import { baseUrl } from '../utils/service';
 
 const EmailConfirmation = () => {
   const location = useLocation();
@@ -20,7 +21,7 @@ const EmailConfirmation = () => {
       const verifyToken = async () => {
         try {
           setLoading(true);
-          const response = await axios.get(`https://iwb-liard.vercel.app/api/auth/confirm-email/${token}`);
+          const response = await axios.get(`${baseUrl}/api/auth/confirm-email/${token}`);
           
           if (response.data.success) {
             setStatus('success');
@@ -63,7 +64,7 @@ const EmailConfirmation = () => {
     if (!email) return;
     
     try {
-      await axios.post('https://iwb-liard.vercel.app/api/auth/resend-confirmation', { email });
+      await axios.post(`${baseUrl}/api/auth/resend-confirmation`, { email });
       
       toast.success(
         <div className="flex items-center">

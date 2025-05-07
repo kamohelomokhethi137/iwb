@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import SecurityBubbles from './animation/SecurityBubbles';
+import { baseUrl } from '../utils/service';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Signup = () => {
     
     const fetchRoleCounts = async () => {
       try {
-        const response = await axios.get('https://iwb-server.onrender.com/api/auth/role-counts');
+        const response = await axios.get(`${baseUrl}/api/auth/role-counts`);
         setRoleCounts(response.data);
       } catch (err) {
         console.error('Failed to fetch role counts:', err);
@@ -104,7 +105,7 @@ const Signup = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://iwb-server.onrender.com/api/auth/signup', {
+      const response = await axios.post(`${baseUrl}/api/auth/signup`, {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -152,7 +153,7 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = 'https://iwb-server.onrender.com/api/auth/google';
+    window.location.href = `${baseUrl}/api/auth/google`;
   };
 
   const getRoleIcon = (role) => {
