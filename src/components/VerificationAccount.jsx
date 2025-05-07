@@ -303,6 +303,7 @@ const VerificationAccount = () => {
           </motion.p>
         )}
       </motion.div>
+      
     </div>
   );
 };
