@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     react()],
-    base: '/',
+    base: 'https://iwb-liard.vercel.app/',
     build: {
       chunkSizeWarningLimit: 1600,
     },
