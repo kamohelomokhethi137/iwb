@@ -20,7 +20,7 @@ const EmailConfirmation = () => {
       const verifyToken = async () => {
         try {
           setLoading(true);
-          const response = await axios.get(`http://localhost:5000/api/auth/confirm-email/${token}`);
+          const response = await axios.get(`https://iwb-liard.vercel.app/api/auth/confirm-email/${token}`);
           
           if (response.data.success) {
             setStatus('success');
@@ -63,7 +63,7 @@ const EmailConfirmation = () => {
     if (!email) return;
     
     try {
-      await axios.post('http://localhost:5000/api/auth/resend-confirmation', { email });
+      await axios.post('https://iwb-liard.vercel.app/api/auth/resend-confirmation', { email });
       
       toast.success(
         <div className="flex items-center">
