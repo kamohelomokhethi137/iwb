@@ -55,7 +55,7 @@ const VerificationAccount = () => {
 
     setLoading(true);
     try {
-      const result = await axios.patch('http://localhost:5000/api/auth/confirm-email', {
+      const result = await axios.patch('https://iwb-liard.vercel.app/api/auth/confirm-email', {
         emailToken,
         email
       });
