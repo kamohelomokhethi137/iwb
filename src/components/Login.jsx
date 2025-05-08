@@ -115,7 +115,7 @@ const Login = () => {
           investor: '/investor-portal',
           partner: '/iwc',
           developer: '/developer',
-          // client: '/client-dashboard'
+  
         };
 
         navigate(dashboardPaths[user.role] || '/dashboard');

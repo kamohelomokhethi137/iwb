@@ -16,16 +16,14 @@ const Signup = () => {
     SALES: 'sales',
     FINANCE: 'finance',
     INVESTOR: 'investor',
-    PARTNER: 'partner',
-    CLIENT: 'client'
+    PARTNER: 'partner'
   };
 
   const ROLE_DESCRIPTIONS = {
     [ROLES.SALES]: 'Sales Personnel (Max 3) - Can access sales records',
     [ROLES.FINANCE]: 'Finance Personnel (Max 3) - Can access income statements',
     [ROLES.INVESTOR]: 'Investor - Read-only income statements',
-    [ROLES.PARTNER]: 'Partner - Full solution access (except queries)',
-    [ROLES.CLIENT]: 'Client - Can submit queries'
+    [ROLES.PARTNER]: 'Partner - Full solution access (except queries)'
   };
 
   const [formData, setFormData] = useState({
@@ -33,7 +31,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: ROLES.CLIENT
+    role: ROLES.SALES // Changed default role to SALES
   });
 
   const [errors, setErrors] = useState({});
@@ -257,7 +255,6 @@ const Signup = () => {
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.role ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
                 >
-                  <option value={ROLES.CLIENT}>Client</option>
                   <option value={ROLES.SALES}>Sales Personnel</option>
                   <option value={ROLES.FINANCE}>Finance Personnel</option>
                   <option value={ROLES.INVESTOR}>Investor</option>
@@ -303,7 +300,7 @@ const Signup = () => {
               className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <FaGoogle className="text-blue-500 dark:text-blue-400" />
-              <span>Continue with Google (Clients only)</span>
+              <span>Continue with Google</span>
             </motion.button>
           </>
         )}
