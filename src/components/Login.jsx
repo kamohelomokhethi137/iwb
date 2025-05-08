@@ -113,7 +113,7 @@ const Login = () => {
           sales: '/sales-dashboard',
           finance: '/finance-dashboard',
           investor: '/investor-portal',
-          partner: '/partner-portal',
+          partner: '/iwc',
           developer: '/developer',
           // client: '/client-dashboard'
         };
