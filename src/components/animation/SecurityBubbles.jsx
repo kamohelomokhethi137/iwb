@@ -35,4 +35,3 @@ const SecurityBubbles = () => {
 };
 
 export default SecurityBubbles;
-
