@@ -1,127 +1,97 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  FaShoppingCart, 
-  FaHeart, 
-  FaStar, 
-  FaRegStar, 
-  FaSearch, 
-  FaFilter,
-  FaMemory,
-  FaMicrochip,
-  FaHdd,
-  FaServer,
-  FaPlug,
-  FaDesktop,
-  FaProjectDiagram,
-  FaTimes,
-  FaTrash
-} from 'react-icons/fa';
-import Navbar from './Layout/Navbar'; // Import the Navbar component
+import { FaTimes,FaMemory,FaProjectDiagram, FaHdd,FaMicrochip, } from 'react-icons/fa';
+import Navbar from './Layout/Navbar';
+import ProductFilters from './products/ProductFilters';
+import ProductGrid from './products/ProductGrid';
+import CartPreview from './cart/CartPreview';
+import CartModal from './cart/CartModal';
+import CheckoutProgress from './checkout/CheckoutProgress';
+import ShippingForm from './checkout/ShippingForm';
+import PaymentMethod from './checkout/PaymentMethod';
+import OrderReview from './checkout/OrderReview';
+import OrderSuccess from './checkout/OrderSuccess';
+import MotherImage from '../assets/mother.jpg';
+import SSDImage from '../assets/ssd.jpg';
+import CPUImage from '../assets/cpu.jpg';
 
-// Product data with initial stock values
+// Product data with initial stock values (5 items)
 const initialProducts = [
   {
     id: 1,
-    name: "DDR4 RAM Modules (Used)",
+    name: "DDR4 RAM 16GB (Used)",
     category: "RAM",
     price: 899.99,
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "16GB DDR4 RAM modules tested and certified for performance. Perfect for upgrades or repairs.",
-    stock: 12
+    description: "16GB DDR4 RAM modules tested and certified for performance.",
+    stock: 5,
+    categoryIcon: <FaMemory className="text-blue-500" size={24} />
   },
   {
     id: 2,
-    name: "Refurbished Motherboards",
+    name: "Refurbished Motherboard",
     category: "Motherboards",
     price: 1750.50,
     rating: 4.2,
-    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Various models available. Fully tested with 6-month warranty. Ideal for budget builds.",
-    stock: 8
+    image: MotherImage,
+    description: "Various models available. Fully tested with warranty.",
+    stock: 5,
+    categoryIcon: <FaProjectDiagram className="text-purple-500" size={24} />
   },
   {
     id: 3,
-    name: "Recycled Circuit Boards",
-    category: "Circuit Boards",
-    price: 245.00,
-    rating: 3.8,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Assorted circuit boards for parts or educational purposes. Sold by weight.",
-    stock: 25
-  },
-  {
-    id: 4,
-    name: "Refurbished Hard Drives",
+    name: "1TB SSD (Refurbished)",
     category: "Storage",
     price: 685.99,
     rating: 4.0,
-    image: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "500GB-1TB drives with full diagnostic testing. Great for secondary storage.",
-    stock: 15
+    image: SSDImage,
+    description: "1TB SSD with full diagnostic testing.",
+    stock: 5,
+    categoryIcon: <FaHdd className="text-yellow-500" size={24} />
   },
   {
-    id: 5,
-    name: "Used CPUs (Various Models)",
+    id: 4,
+    name: "Intel Core i7 CPU",
     category: "Processors",
     price: 1175.00,
     rating: 4.3,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f1723e1b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Tested processors from i3 to i7 generations. Excellent value for money.",
-    stock: 10
+    image: CPUImage,
+    description: "Tested processors with excellent value.",
+    stock: 5,
+    categoryIcon: <FaMicrochip className="text-red-500" size={24} />
   },
-  {
-    id: 6,
-    name: "Power Supply Units",
-    category: "PSUs",
-    price: 585.50,
-    rating: 3.9,
-    image: "https://images.unsplash.com/photo-1603732551681-2e91159b9dc2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "450W-650W PSUs with full testing. Reliable power for your projects.",
-    stock: 7
-  },
-  {
-    id: 7,
-    name: "Laptop LCD Screens",
-    category: "Displays",
-    price: 1299.00,
-    rating: 4.1,
-    image: "https://images.unsplash.com/photo-1491933382434-500287f9b54b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Various sizes available. Perfect for laptop repairs and replacements.",
-    stock: 9
-  },
-  {
-    id: 8,
-    name: "Server Components Bundle",
-    category: "Servers",
-    price: 2999.99,
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "Complete set of server components for homelab enthusiasts.",
-    stock: 4
-  }
 ];
 
-const categoryIcons = {
-  RAM: <FaMemory className="text-blue-500" size={24} />,
-  Motherboards: <FaProjectDiagram className="text-purple-500" size={24} />,
-  "Circuit Boards": <FaProjectDiagram className="text-green-500" size={24} />,
-  Storage: <FaHdd className="text-yellow-500" size={24} />,
-  Processors: <FaMicrochip className="text-red-500" size={24} />,
-  PSUs: <FaPlug className="text-orange-500" size={24} />,
-  Displays: <FaDesktop className="text-indigo-500" size={24} />,
-  Servers: <FaServer className="text-teal-500" size={24} />
-};
-
 const ProductsPage = () => {
+  // State and data initialization
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortOption, setSortOption] = useState('featured');
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [products, setProducts] = useState(initialProducts);
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: 'South Africa',
+    cardNumber: '',
+    cardName: '',
+    expiry: '',
+    cvv: ''
+  });
 
   // Get unique categories
   const categories = ['All', ...new Set(products.map(product => product.category))];
@@ -149,9 +119,7 @@ const ProductsPage = () => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
-        // Check if we have enough stock
         if (existingItem.quantity >= product.stock) return prevCart;
-        
         return prevCart.map(item =>
           item.id === product.id 
             ? { ...item, quantity: item.quantity + 1 } 
@@ -162,7 +130,6 @@ const ProductsPage = () => {
       }
     });
 
-    // Reduce stock
     setProducts(prevProducts =>
       prevProducts.map(p =>
         p.id === product.id ? { ...p, stock: p.stock - 1 } : p
@@ -173,8 +140,6 @@ const ProductsPage = () => {
   // Remove from cart and restore stock
   const removeFromCart = (productId, quantity) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
-    
-    // Restore stock
     setProducts(prevProducts =>
       prevProducts.map(p =>
         p.id === productId ? { ...p, stock: p.stock + quantity } : p
@@ -189,7 +154,6 @@ const ProductsPage = () => {
     const stockChange = newQuantity - oldQuantity;
     const product = products.find(p => p.id === productId);
     
-    // Check if we have enough stock
     if (stockChange > 0 && product.stock < stockChange) return;
 
     setCart(prevCart =>
@@ -198,7 +162,6 @@ const ProductsPage = () => {
       )
     );
 
-    // Adjust stock
     setProducts(prevProducts =>
       prevProducts.map(p =>
         p.id === productId ? { ...p, stock: p.stock - stockChange } : p
@@ -208,224 +171,213 @@ const ProductsPage = () => {
 
   // Toggle wishlist
   const toggleWishlist = (productId) => {
-    if (wishlist.includes(productId)) {
-      setWishlist(wishlist.filter(id => id !== productId));
-    } else {
-      setWishlist([...wishlist, productId]);
-    }
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId) 
+        : [...prev, productId]
+    );
   };
 
   // Calculate total
   const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-  // Render star rating
-  const renderRating = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        i <= Math.floor(rating) ? 
-        <FaStar key={i} className="text-yellow-400" /> : 
-        <FaRegStar key={i} className="text-yellow-400" />
-      );
-    }
-    return stars;
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Format currency (ZAR)
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-      minimumFractionDigits: 2
-    }).format(amount);
+  // Format card number as user types
+  const handleCardNumberChange = (e) => {
+    let value = e.target.value.replace(/\s+/g, '');
+    if (value.length > 16) value = value.substr(0, 16);
+    value = value.replace(/(\d{4})/g, '$1 ').trim();
+    setFormData(prev => ({ ...prev, cardNumber: value }));
+  };
+
+  // Format expiry date as user types
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 4) value = value.substr(0, 4);
+    if (value.length > 2) value = value.replace(/(\d{2})(\d{0,2})/, '$1/$2');
+    setFormData(prev => ({ ...prev, expiry: value }));
+  };
+
+  // Submit order to backend
+  const submitOrder = async () => {
+    setIsProcessing(true);
+    setOrderError('');
+    
+    try {
+      const orderData = {
+        customer: formData,
+        payment: {
+          method: paymentMethod,
+          ...(paymentMethod === 'card' && {
+            cardLastFour: formData.cardNumber.slice(-4),
+            cardType: getCardType(formData.cardNumber)
+          })
+        },
+        items: cart,
+        total: cartTotal,
+        date: new Date().toISOString()
+      };
+
+      console.log('Order submitted:', orderData);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setOrderSuccess(true);
+      setCart([]);
+      setIsProcessing(false);
+      
+    } catch (error) {
+      console.error('Order error:', error);
+      setOrderError('Failed to process order. Please try again.');
+      setIsProcessing(false);
+    }
+  };
+
+  // Determine card type
+  const getCardType = (number) => {
+    const num = number.replace(/\s+/g, '');
+    if (/^4/.test(num)) return 'Visa';
+    if (/^5[1-5]/.test(num)) return 'Mastercard';
+    if (/^3[47]/.test(num)) return 'American Express';
+    return 'Unknown';
+  };
+
+  // Separate validation functions for each step
+  const validateShipping = () => {
+    if (!formData.firstName || !formData.lastName) {
+      return 'Please enter your full name';
+    }
+    if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      return 'Please enter a valid email address';
+    }
+    if (!formData.address || !formData.city || !formData.postalCode) {
+      return 'Please complete your shipping address';
+    }
+    return null;
+  };
+
+  const validatePayment = () => {
+    if (paymentMethod === 'card') {
+      if (!formData.cardNumber || formData.cardNumber.replace(/\s+/g, '').length < 16) {
+        return 'Please enter a valid card number (16 digits)';
+      }
+      if (!formData.cardName) {
+        return 'Please enter the name on your card';
+      }
+      if (!formData.expiry || !/^\d{2}\/\d{2}$/.test(formData.expiry)) {
+        return 'Please enter a valid expiry date (MM/YY)';
+      }
+      if (!formData.cvv || formData.cvv.length < 3) {
+        return 'Please enter a valid CVV (3-4 digits)';
+      }
+    }
+    return null;
+  };
+
+  // Updated checkout navigation
+  const nextStep = () => {
+    let error = null;
+    
+    if (checkoutStep === 1) {
+      error = validateShipping(); // Only validate shipping info
+    } else if (checkoutStep === 2) {
+      error = validatePayment(); // Only validate payment info
+    }
+
+    if (error) {
+      setOrderError(error);
+      return;
+    }
+    
+    setCheckoutStep(prev => prev + 1);
+    setOrderError('');
+  };
+
+  const prevStep = () => {
+    setCheckoutStep(prev => prev - 1);
+    setOrderError('');
+  };
+
+  const resetCheckout = () => {
+    setShowCheckout(false);
+    setCheckoutStep(1);
+    setOrderSuccess(false);
+    setOrderError('');
+  };
+
+  const closeModal = () => {
+    setShowCart(false);
+    if (showCheckout) resetCheckout();
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navbar /> 
       <div className="max-w-7xl mx-auto pt-24 px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-extrabold sm:text-4xl"
-          >
-            Sustainable Tech Marketplace
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mt-3 max-w-2xl mx-auto text-xl"
-          >
-            High-quality recycled and refurbished electronic components
-          </motion.p>
-        </div>
-
-        {/* Search and Filter */}
+        {/* Header with simple fade animation */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="mb-8 bg-gray-800 p-4 rounded-lg shadow-sm"
+          transition={{ duration: 0.3 }}
+          className="text-center mb-12"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-md leading-5 bg-gray-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center">
-                <FaFilter className="text-gray-400 mr-2" />
-                <select
-                  className="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md bg-gray-700 text-white"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <select
-                className="block w-full pl-3 pr-10 py-2 text-base border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md bg-gray-700 text-white"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="featured">Featured</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rating</option>
-              </select>
-            </div>
-          </div>
+          <h1 className="text-3xl font-extrabold sm:text-4xl">
+            Sustainable Tech Marketplace
+          </h1>
+          <p className="mt-3 max-w-2xl mx-auto text-xl">
+            High-quality recycled and refurbished components
+          </p>
         </motion.div>
 
-        {/* Products Grid */}
+        {/* Search and Filter - no animation */}
+        <ProductFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          categories={categories}
+        />
+
+        {/* Products Grid with simple fade */}
         {sortedProducts.length > 0 ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            transition={{ duration: 0.3 }}
           >
-            {sortedProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                className="bg-gray-800 rounded-lg overflow-hidden shadow-md border border-gray-700 hover:border-teal-300 transition-all duration-300"
-              >
-                <div className="relative">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <button
-                    onClick={() => toggleWishlist(product.id)}
-                    className={`absolute top-2 right-2 p-2 rounded-full ${wishlist.includes(product.id) ? 'text-red-500 bg-white' : 'text-gray-400 bg-white'}`}
-                    aria-label={wishlist.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"}
-                  >
-                    <FaHeart />
-                  </button>
-                  {product.stock < 5 && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                      {product.stock > 0 ? `Only ${product.stock} left` : 'Out of stock'}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="inline-flex items-center">
-                      {categoryIcons[product.category]}
-                      <span className="ml-2 text-sm font-medium">
-                        {product.category}
-                      </span>
-                    </span>
-                    <div className="flex items-center">
-                      {renderRating(product.rating)}
-                      <span className="ml-1 text-sm">
-                        ({product.rating})
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-semibold mb-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                    {product.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-xl font-bold">
-                      {formatCurrency(product.price)}
-                    </span>
-                    <button
-                      onClick={() => addToCart(product)}
-                      disabled={product.stock <= 0}
-                      className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-300 ${
-                        product.stock <= 0
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          : 'bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500'
-                      }`}
-                    >
-                      <FaShoppingCart className="mr-2" />
-                      {product.stock <= 0 ? 'Out of stock' : 'Add to Cart'}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            <ProductGrid
+              products={sortedProducts}
+              wishlist={wishlist}
+              toggleWishlist={toggleWishlist}
+              addToCart={addToCart}
+            />
           </motion.div>
         ) : (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
+            transition={{ duration: 0.3 }}
             className="text-center py-12"
           >
-            <h3 className="text-xl font-medium mb-2">
-              No products found
-            </h3>
-            <p className="text-gray-400">
-              Try adjusting your search or filter criteria
-            </p>
+            <h3 className="text-xl font-medium mb-2">No products found</h3>
+            <p className="text-gray-400">Adjust your search criteria</p>
           </motion.div>
         )}
 
-        {/* Cart Preview */}
-        {cart.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-4 right-4 bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700 z-10"
+        {/* Cart Preview with simple bounce */}
+        {cart.length > 0 && !showCart && (
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500 }}
           >
-            <div className="flex items-center">
-              <FaShoppingCart className="text-teal-600 mr-2" />
-              <span className="font-medium">
-                {cart.reduce((total, item) => total + item.quantity, 0)} item{cart.length !== 1 ? 's' : ''} in cart
-              </span>
-              <button 
-                onClick={() => setShowCart(true)}
-                className="ml-4 text-sm text-teal-600 hover:text-teal-400 underline"
-              >
-                View Cart
-              </button>
-            </div>
+            <CartPreview cart={cart} setShowCart={setShowCart} />
           </motion.div>
         )}
 
@@ -433,94 +385,104 @@ const ProductsPage = () => {
         {showCart && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              <CartModal
+                showCart={showCart}
+                closeModal={closeModal}
+                cart={cart}
+                products={products}
+                removeFromCart={removeFromCart}
+                updateQuantity={updateQuantity}
+                cartTotal={cartTotal}
+                setShowCheckout={setShowCheckout}
+              />
+            </motion.div>
+          </div>
+        )}
+
+        {/* Checkout Modal */}
+        {showCheckout && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
               className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="p-6">
                 <div className="flex justify-between items-center border-b pb-4 border-gray-700">
-                  <h2 className="text-2xl font-bold">Your Shopping Cart</h2>
+                  <h2 className="text-2xl font-bold">Checkout</h2>
                   <button 
-                    onClick={() => setShowCart(false)}
-                    className="text-gray-400 hover:text-gray-300"
+                    onClick={closeModal}
+                    className="text-gray-400 hover:text-gray-300 transition-colors"
                   >
                     <FaTimes size={20} />
                   </button>
                 </div>
 
-                {cart.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-gray-400">Your cart is empty</p>
-                  </div>
+                {orderSuccess ? (
+                  <OrderSuccess formData={formData} closeModal={closeModal} />
                 ) : (
                   <>
-                    <div className="divide-y divide-gray-700">
-                      {cart.map(item => (
-                        <div key={item.id} className="py-4 flex flex-col sm:flex-row">
-                          <div className="flex-shrink-0">
-                            <img 
-                              src={item.image} 
-                              alt={item.name}
-                              className="h-24 w-24 object-cover rounded"
-                            />
-                          </div>
-                          <div className="mt-4 sm:mt-0 sm:ml-6 flex-grow">
-                            <div className="flex justify-between">
-                              <h3 className="text-lg font-medium">{item.name}</h3>
-                              <button 
-                                onClick={() => removeFromCart(item.id, item.quantity)}
-                                className="text-gray-400 hover:text-red-500"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                            <p className="mt-1 text-sm">{item.category}</p>
-                            <div className="mt-2 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1, item.quantity)}
-                                  className="px-2 py-1 border rounded-l-md border-gray-600 bg-gray-700 text-white"
-                                >
-                                  -
-                                </button>
-                                <span className="px-4 py-1 border-t border-b border-gray-600 text-white">
-                                  {item.quantity}
-                                </span>
-                                <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1, item.quantity)}
-                                  disabled={products.find(p => p.id === item.id)?.stock <= 0}
-                                  className={`px-2 py-1 border rounded-r-md border-gray-600 ${
-                                    products.find(p => p.id === item.id)?.stock <= 0
-                                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                      : 'bg-gray-700 text-white'
-                                  }`}
-                                >
-                                  +
-                                </button>
-                              </div>
-                              <p className="text-lg font-medium">
-                                {formatCurrency(item.price * item.quantity)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="border-t mt-4 pt-4 border-gray-700">
-                      <div className="flex justify-between text-lg font-medium mb-2">
-                        <span>Subtotal</span>
-                        <span>{formatCurrency(cartTotal)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm text-gray-400 mb-4">
-                        <span>Shipping calculated at checkout</span>
-                      </div>
-                      <button
-                        className="mt-2 w-full bg-teal-600 text-white py-3 px-4 rounded-md text-lg font-medium hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors"
+                    <CheckoutProgress checkoutStep={checkoutStep} />
+                    
+                    {checkoutStep === 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        Proceed to Checkout
-                      </button>
-                    </div>
+                        <ShippingForm
+                          formData={formData}
+                          handleInputChange={handleInputChange}
+                          nextStep={nextStep}
+                          orderError={orderError}
+                        />
+                      </motion.div>
+                    )}
+
+                    {checkoutStep === 2 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <PaymentMethod
+                          paymentMethod={paymentMethod}
+                          setPaymentMethod={setPaymentMethod}
+                          formData={formData}
+                          handleCardNumberChange={handleCardNumberChange}
+                          handleInputChange={handleInputChange}
+                          handleExpiryChange={handleExpiryChange}
+                          prevStep={prevStep}
+                          nextStep={nextStep}
+                          orderError={orderError}
+                        />
+                      </motion.div>
+                    )}
+
+                    {checkoutStep === 3 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <OrderReview
+                          formData={formData}
+                          paymentMethod={paymentMethod}
+                          cart={cart}
+                          cartTotal={cartTotal}
+                          prevStep={prevStep}
+                          submitOrder={submitOrder}
+                          isProcessing={isProcessing}
+                          orderError={orderError}
+                        />
+                      </motion.div>
+                    )}
                   </>
                 )}
               </div>
