@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './authContext';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -25,6 +26,15 @@ function Navbar() {
     { path: "/products", label: "Products" },
     { path: "/contact", label: "Contact" }
   ];
+
+  // Role-specific dashboard paths
+  const roleDashboardPaths = {
+    SALES: "/sales-dashboard",
+    FINANCE: "/finance-dashboard",
+    INVESTOR: "/investor-portal",
+    DEVELOPER: "/dev-console",
+    IWC_PARTNER: "/partner-dashboard"
+  };
 
   // Role-specific navigation links
   const roleBasedLinks = {
@@ -46,6 +56,19 @@ function Navbar() {
       { path: "/partner-dashboard", label: "Partner Dashboard" },
       { path: "/analytics", label: "Analytics" }
     ]
+  };
+
+  // Get dashboard path based on user role
+  const getDashboardPath = () => {
+    if (!user) return '/';
+    return roleDashboardPaths[user.role] || '/';
+  };
+
+  // Handle dashboard navigation
+  const handleDashboardClick = () => {
+    const dashboardPath = getDashboardPath();
+    setIsMenuOpen(false);
+    navigate(dashboardPath);
   };
 
   // Get links for current user role
@@ -134,13 +157,12 @@ function Navbar() {
                       {user.role.replace('_', ' ')}
                     </p>
                   </div>
-                  <Link
-                    to="/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    onClick={handleDashboardClick}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    Settings
-                  </Link>
+                    Take me to Dashboard
+                  </button>
                   <button
                     onClick={() => {
                       logout();
