@@ -136,7 +136,7 @@ function Navbar() {
                 className="flex items-center space-x-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="relative">
-                  <div className={`w-10 h-10 rounded-full ${getAvatarColor()} flex items-center justify-center text-white font-bold`}>
+                  <div className={w-10 h-10 rounded-full ${getAvatarColor()} flex items-center justify-center text-white font-bold}>
                     {getUserInitials()}
                   </div>
                 </div>
@@ -197,7 +197,7 @@ function Navbar() {
           </button>
         </div>
 
-        <div className={`items-center justify-between w-full md:flex md:w-auto md:order-1 ${isMenuOpen ? 'block' : 'hidden'}`}>
+        <div className={items-center justify-between w-full md:flex md:w-auto md:order-1 ${isMenuOpen ? 'block' : 'hidden'}}>
           <ul className="flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 dark:border-gray-700 rounded-lg bg-white/30 dark:bg-gray-800/30 backdrop-blur-md md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-transparent dark:md:bg-transparent">
             {navLinks.map((link) => (
               <li key={link.path}>
