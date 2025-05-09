@@ -1,10 +1,53 @@
-import React, { useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from './Layout/Navbar';
 import contactImage from '../assets/recycle.png';
 
+// Preload image
+const preloadImage = () => {
+  const img = new Image();
+  img.src = contactImage;
+};
+
+// Simplified animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 10, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "tween",
+      ease: "easeOut",
+      duration: 0.3
+    }
+  }
+};
+
+const fadeInVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
+
 const ContactPage = () => {
+  // Preload image on component mount
+  useEffect(() => {
+    preloadImage();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,45 +55,6 @@ const ContactPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
-
-  const controls = useAnimation();
-  const [ref, inView] = useInView({
-    threshold: 0.1,
-    triggerOnce: true
-  });
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 10,
-        duration: 0.5
-      }
-    }
-  };
-
-  const fadeInVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.8, ease: "easeOut" }
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,7 +68,6 @@ const ContactPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       setSubmitStatus('success');
@@ -82,20 +85,17 @@ const ContactPage = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <motion.section 
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="relative pt-24 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32"
-      >
+      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-blue-500 opacity-10 dark:opacity-5"></div>
         </div>
         
-        <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
+        <div className="container mx-auto px-6 lg:px-8 max-w-7xl text-center">
           <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "0px 0px -100px 0px" }}
             variants={containerVariants}
-            className="text-center"
           >
             <motion.h1 
               variants={itemVariants}
@@ -112,15 +112,15 @@ const ContactPage = () => {
             </motion.p>
           </motion.div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Contact Content */}
       <div className="container mx-auto px-6 lg:px-8 max-w-7xl pb-16 md:pb-24 lg:pb-32">
         {/* Contact Form Section */}
         <motion.section
-          ref={ref}
           initial="hidden"
-          animate="visible"
+          whileInView="visible"
+          viewport={{ once: true, margin: "0px 0px -100px 0px" }}
           variants={containerVariants}
           className="mb-20"
         >
@@ -132,15 +132,15 @@ const ContactPage = () => {
               
               {submitStatus === 'success' ? (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-6"
                 >
-                  Thank you! Your message has been sent successfully. We'll get back to you soon.
+                  Thank you! Your message has been sent successfully.
                 </motion.div>
               ) : submitStatus === 'error' ? (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6"
                 >
@@ -230,6 +230,8 @@ const ContactPage = () => {
                   alt="Contact us"
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  width={800}
+                  height={600}
                 />
               </div>
             </motion.div>
@@ -274,9 +276,6 @@ const ContactPage = () => {
                       className="text-teal-600 dark:text-teal-400 font-medium flex items-center justify-center"
                     >
                       View on map
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
                     </motion.a>
                   )
                 },
@@ -295,9 +294,6 @@ const ContactPage = () => {
                       className="text-teal-600 dark:text-teal-400 font-medium flex items-center justify-center"
                     >
                       Email us
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
                     </motion.a>
                   )
                 },
@@ -315,9 +311,6 @@ const ContactPage = () => {
                       className="text-teal-600 dark:text-teal-400 font-medium flex items-center justify-center"
                     >
                       Download calendar
-                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
                     </motion.button>
                   )
                 }
@@ -343,7 +336,7 @@ const ContactPage = () => {
         <motion.section
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "0px 0px -100px 0px" }}
           variants={containerVariants}
           className="mb-20"
         >
@@ -360,19 +353,19 @@ const ContactPage = () => {
             {[
               {
                 question: "What types of e-waste do you accept?",
-                answer: "We accept all types of electronic waste including computers, laptops, mobile devices, and their components like RAM, hard drives, and motherboards."
+                answer: "We accept all types of electronic waste including computers, laptops, mobile devices, and their components."
               },
               {
                 question: "Is there a fee for e-waste recycling?",
-                answer: "For most consumer electronics, our services are free. For large quantities or special items, please contact us for a quote."
+                answer: "For most consumer electronics, our services are free. For large quantities, please contact us."
               },
               {
                 question: "How do you ensure data security?",
-                answer: "We follow strict data destruction protocols including physical destruction of storage media and certified wiping processes for reusable components."
+                answer: "We follow strict data destruction protocols including physical destruction of storage media."
               },
               {
                 question: "Do you offer pickup services?",
-                answer: "Yes, we offer scheduled pickup services for businesses and bulk disposals. Contact us to arrange a pickup."
+                answer: "Yes, we offer scheduled pickup services for businesses and bulk disposals."
               }
             ].map((faq, index) => (
               <motion.div 

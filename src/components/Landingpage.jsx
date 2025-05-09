@@ -38,25 +38,38 @@ const componentImages = [
   }
 ];
 
-// Simplified animation variants
+// Simplified animation variants (reduced complexity)
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.6 } }
+  visible: { 
+    opacity: 1, 
+    transition: { 
+      duration: 0.5,
+      ease: "easeOut"
+    } 
+  }
 };
 
 const slideUp = {
   hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
+  visible: { 
+    y: 0, 
+    opacity: 1, 
+    transition: { 
+      duration: 0.5,
+      ease: "easeOut"
+    } 
+  }
 };
 
-// Feature component with simplified animation
-const FeatureCard = ({ icon, title, description, index }) => (
+// Feature component with optimized animation
+const FeatureCard = React.memo(({ icon, title, description, index }) => (
   <motion.div
     initial="hidden"
     whileInView="visible"
-    viewport={{ once: true, margin: "0px 0px -50px 0px" }}
+    viewport={{ once: true, margin: "0px 0px -100px 0px" }} // Increased margin for earlier trigger
     variants={fadeIn}
-    transition={{ delay: index * 0.1 }}
+    transition={{ delay: index * 0.1, duration: 0.5 }}
     className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-teal-300 border border-transparent"
   >
     <div className="mb-4">
@@ -69,7 +82,7 @@ const FeatureCard = ({ icon, title, description, index }) => (
       {description}
     </p>
   </motion.div>
-);
+));
 
 const LandingPage = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -84,11 +97,11 @@ const LandingPage = () => {
     }
   }, []);
 
-  // Auto-rotate images with cleanup
+  // Optimized auto-rotate with cleanup and reduced frequency
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage(prev => (prev + 1) % componentImages.length);
-    }, 5000); // Increased interval for better performance
+    }, 7000); // Increased interval for better performance
     
     return () => clearInterval(interval);
   }, []);
@@ -128,7 +141,7 @@ const LandingPage = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.4 }} // Reduced duration
               />
             </AnimatePresence>
           </div>
@@ -143,7 +156,7 @@ const LandingPage = () => {
             <motion.div
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "0px 0px -100px 0px" }} // Earlier trigger
               variants={fadeIn}
             >
               <h1 
@@ -163,7 +176,7 @@ const LandingPage = () => {
 
               <motion.div
                 variants={slideUp}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.1 }} // Reduced delay
                 className="flex flex-col sm:flex-row justify-center gap-4"
               >
                 <Link
@@ -185,7 +198,7 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* About Section */}
+        {/* About Section - Simplified animations */}
         <section 
           className="py-16 md:py-24 lg:py-32 bg-white dark:bg-gray-800"
           aria-labelledby="about-heading"
@@ -193,10 +206,10 @@ const LandingPage = () => {
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "0px 0px -50px 0px" }}
-                variants={slideUp}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+                transition={{ duration: 0.5 }}
               >
                 <h2 
                   id="about-heading"
@@ -221,11 +234,10 @@ const LandingPage = () => {
               </motion.div>
               
               <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "0px 0px -50px 0px" }}
-                variants={slideUp}
-                transition={{ delay: 0.2 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+                transition={{ duration: 0.5, delay: 0.1 }}
                 className="relative"
               >
                 {/* Image Carousel Container */}
@@ -239,7 +251,7 @@ const LandingPage = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.5 }}
+                      transition={{ duration: 0.4 }}
                       className="absolute inset-0 w-full h-full"
                     >
                       <img 
@@ -288,17 +300,17 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Features Section - Optimized with React.memo */}
         <section 
           className="py-16 md:py-24 lg:py-32 bg-gradient-to-br from-blue-50 to-teal-50 dark:from-gray-900 dark:to-gray-800"
           aria-labelledby="features-heading"
         >
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
             <motion.div 
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+              transition={{ duration: 0.5 }}
               className="text-center mb-16"
             >
               <h2 
@@ -393,17 +405,17 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* CTA Section - Simplified animation */}
         <section 
           className="py-16 md:py-24 lg:py-32 bg-gradient-to-r from-teal-500 to-blue-600"
           aria-labelledby="cta-heading"
         >
           <div className="container mx-auto px-6 lg:px-8 max-w-7xl text-center">
             <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeIn}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+              transition={{ duration: 0.5 }}
             >
               <h2 
                 id="cta-heading"
@@ -414,7 +426,13 @@ const LandingPage = () => {
               <p className="text-blue-100 max-w-2xl mx-auto mb-8 text-lg">
                 Partner with IWB to transform electronic waste into sustainable opportunity.
               </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="flex flex-col sm:flex-row justify-center gap-4"
+              >
                 <Link 
                   to="/contact"
                   className="px-8 py-3 bg-white text-teal-600 hover:bg-gray-50 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
@@ -429,7 +447,7 @@ const LandingPage = () => {
                 >
                   Learn More
                 </Link>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </section>

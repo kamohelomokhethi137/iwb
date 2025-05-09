@@ -1,497 +1,565 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaTimes,FaMemory,FaProjectDiagram, FaHdd,FaMicrochip, } from 'react-icons/fa';
-import Navbar from './Layout/Navbar';
-import ProductFilters from './products/ProductFilters';
-import ProductGrid from './products/ProductGrid';
-import CartPreview from './cart/CartPreview';
-import CartModal from './cart/CartModal';
-import CheckoutProgress from './checkout/CheckoutProgress';
-import ShippingForm from './checkout/ShippingForm';
-import PaymentMethod from './checkout/PaymentMethod';
-import OrderReview from './checkout/OrderReview';
-import OrderSuccess from './checkout/OrderSuccess';
-import MotherImage from '../assets/mother.jpg';
-import SSDImage from '../assets/ssd.jpg';
-import CPUImage from '../assets/cpu.jpg';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import {
+  FiHome,
+  FiCpu,
+  FiHardDrive,
+  FiTrendingUp,
+  FiDollarSign,
+  FiTarget,
+  FiBarChart2,
+  FiBell,
+  FiUser,
+  FiChevronDown,
+  FiMenu,
+  FiX,
+  FiSun,
+  FiMoon,
+  FiFilter,
+  FiRefreshCw
+} from 'react-icons/fi';
 
-// Product data with initial stock values (5 items)
-const initialProducts = [
-  {
-    id: 1,
-    name: "DDR4 RAM 16GB (Used)",
-    category: "RAM",
-    price: 899.99,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "16GB DDR4 RAM modules tested and certified for performance.",
-    stock: 5,
-    categoryIcon: <FaMemory className="text-blue-500" size={24} />
-  },
-  {
-    id: 2,
-    name: "Refurbished Motherboard",
-    category: "Motherboards",
-    price: 1750.50,
-    rating: 4.2,
-    image: MotherImage,
-    description: "Various models available. Fully tested with warranty.",
-    stock: 5,
-    categoryIcon: <FaProjectDiagram className="text-purple-500" size={24} />
-  },
-  {
-    id: 3,
-    name: "1TB SSD (Refurbished)",
-    category: "Storage",
-    price: 685.99,
-    rating: 4.0,
-    image: SSDImage,
-    description: "1TB SSD with full diagnostic testing.",
-    stock: 5,
-    categoryIcon: <FaHdd className="text-yellow-500" size={24} />
-  },
-  {
-    id: 4,
-    name: "Intel Core i7 CPU",
-    category: "Processors",
-    price: 1175.00,
-    rating: 4.3,
-    image: CPUImage,
-    description: "Tested processors with excellent value.",
-    stock: 5,
-    categoryIcon: <FaMicrochip className="text-red-500" size={24} />
-  },
-];
+// Mock data for charts
+const mockData = {
+  inventoryLevels: [
+    { name: 'RAM', value: 50 },
+    { name: 'Motherboards', value: 30 },
+    { name: 'Storage', value: 40 },
+    { name: 'Processors', value: 60 }
+  ],
+  salesTrends: [
+    { date: '2023-01', sales: 200 },
+    { date: '2023-02', sales: 250 },
+    { date: '2023-03', sales: 300 },
+    { date: '2023-04', sales: 350 }
+  ],
+  categoryDistribution: [
+    { name: 'RAM', value: 25 },
+    { name: 'Motherboards', value: 15 },
+    { name: 'Storage', value: 20 },
+    { name: 'Processors', value: 40 }
+  ]
+};
 
-const ProductsPage = () => {
-  // State and data initialization
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortOption, setSortOption] = useState('featured');
-  const [cart, setCart] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const [showCart, setShowCart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderError, setOrderError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [products, setProducts] = useState(initialProducts);
-  
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    country: 'South Africa',
-    cardNumber: '',
-    cardName: '',
-    expiry: '',
-    cvv: ''
-  });
+// Lazy-loaded chart components
+const InventoryChart = React.lazy(() => import('./hardware/InventoryChart'));
+const SalesChart = React.lazy(() => import('./hardware/SalesChart'));
+const CategoryChart = React.lazy(() => import('./hardware/CategoryChart'));
 
-  // Get unique categories
-  const categories = ['All', ...new Set(products.map(product => product.category))];
+const SalesDashboard = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const controls = useAnimation();
+  const [ref, inView] = useInView();
 
-  // Filter products based on search and category
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    setLoading(false);
+  }, []);
 
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortOption === 'price-low') return a.price - b.price;
-    if (sortOption === 'price-high') return b.price - a.price;
-    if (sortOption === 'rating') return b.rating - a.rating;
-    return a.id - b.id; // Default sort (featured)
-  });
-
-  // Add to cart and reduce stock
-  const addToCart = (product) => {
-    if (product.stock <= 0) return;
-
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        if (existingItem.quantity >= product.stock) return prevCart;
-        return prevCart.map(item =>
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
-      } else {
-        return [...prevCart, { ...product, quantity: 1 }];
-      }
-    });
-
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-      )
-    );
-  };
-
-  // Remove from cart and restore stock
-  const removeFromCart = (productId, quantity) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === productId ? { ...p, stock: p.stock + quantity } : p
-      )
-    );
-  };
-
-  // Update quantity and adjust stock
-  const updateQuantity = (productId, newQuantity, oldQuantity) => {
-    if (newQuantity < 1) return;
-    
-    const stockChange = newQuantity - oldQuantity;
-    const product = products.find(p => p.id === productId);
-    
-    if (stockChange > 0 && product.stock < stockChange) return;
-
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === productId ? { ...p, stock: p.stock - stockChange } : p
-      )
-    );
-  };
-
-  // Toggle wishlist
-  const toggleWishlist = (productId) => {
-    setWishlist(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
-        : [...prev, productId]
-    );
-  };
-
-  // Calculate total
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Format card number as user types
-  const handleCardNumberChange = (e) => {
-    let value = e.target.value.replace(/\s+/g, '');
-    if (value.length > 16) value = value.substr(0, 16);
-    value = value.replace(/(\d{4})/g, '$1 ').trim();
-    setFormData(prev => ({ ...prev, cardNumber: value }));
-  };
-
-  // Format expiry date as user types
-  const handleExpiryChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 4) value = value.substr(0, 4);
-    if (value.length > 2) value = value.replace(/(\d{2})(\d{0,2})/, '$1/$2');
-    setFormData(prev => ({ ...prev, expiry: value }));
-  };
-
-  // Submit order to backend
-  const submitOrder = async () => {
-    setIsProcessing(true);
-    setOrderError('');
-    
-    try {
-      const orderData = {
-        customer: formData,
-        payment: {
-          method: paymentMethod,
-          ...(paymentMethod === 'card' && {
-            cardLastFour: formData.cardNumber.slice(-4),
-            cardType: getCardType(formData.cardNumber)
-          })
-        },
-        items: cart,
-        total: cartTotal,
-        date: new Date().toISOString()
-      };
-
-      console.log('Order submitted:', orderData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setOrderSuccess(true);
-      setCart([]);
-      setIsProcessing(false);
-      
-    } catch (error) {
-      console.error('Order error:', error);
-      setOrderError('Failed to process order. Please try again.');
-      setIsProcessing(false);
-    }
-  };
-
-  // Determine card type
-  const getCardType = (number) => {
-    const num = number.replace(/\s+/g, '');
-    if (/^4/.test(num)) return 'Visa';
-    if (/^5[1-5]/.test(num)) return 'Mastercard';
-    if (/^3[47]/.test(num)) return 'American Express';
-    return 'Unknown';
-  };
-
-  // Separate validation functions for each step
-  const validateShipping = () => {
-    if (!formData.firstName || !formData.lastName) {
-      return 'Please enter your full name';
-    }
-    if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
-      return 'Please enter a valid email address';
-    }
-    if (!formData.address || !formData.city || !formData.postalCode) {
-      return 'Please complete your shipping address';
-    }
-    return null;
-  };
-
-  const validatePayment = () => {
-    if (paymentMethod === 'card') {
-      if (!formData.cardNumber || formData.cardNumber.replace(/\s+/g, '').length < 16) {
-        return 'Please enter a valid card number (16 digits)';
-      }
-      if (!formData.cardName) {
-        return 'Please enter the name on your card';
-      }
-      if (!formData.expiry || !/^\d{2}\/\d{2}$/.test(formData.expiry)) {
-        return 'Please enter a valid expiry date (MM/YY)';
-      }
-      if (!formData.cvv || formData.cvv.length < 3) {
-        return 'Please enter a valid CVV (3-4 digits)';
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
       }
     }
-    return null;
   };
 
-  // Updated checkout navigation
-  const nextStep = () => {
-    let error = null;
-    
-    if (checkoutStep === 1) {
-      error = validateShipping(); // Only validate shipping info
-    } else if (checkoutStep === 2) {
-      error = validatePayment(); // Only validate payment info
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 20
+      }
     }
-
-    if (error) {
-      setOrderError(error);
-      return;
-    }
-    
-    setCheckoutStep(prev => prev + 1);
-    setOrderError('');
   };
 
-  const prevStep = () => {
-    setCheckoutStep(prev => prev - 1);
-    setOrderError('');
+  const sidebarVariants = {
+    open: { x: 0 },
+    closed: { x: '-100%' }
   };
 
-  const resetCheckout = () => {
-    setShowCheckout(false);
-    setCheckoutStep(1);
-    setOrderSuccess(false);
-    setOrderError('');
-  };
+  // Handle scroll for navbar shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const closeModal = () => {
-    setShowCart(false);
-    if (showCheckout) resetCheckout();
-  };
+  // Animate when in view
+  useEffect(() => {
+    if (inView) controls.start('visible');
+  }, [controls, inView]);
+
+  // Hardware menu items
+  const menuItems = [
+    { name: 'Inventory Overview', icon: <FiHome />, id: 'overview' },
+    { name: 'CPU Metrics', icon: <FiCpu />, id: 'cpus' },
+    { name: 'RAM Analytics', icon: <FiHardDrive />, id: 'ram' },
+    { name: 'Storage Stats', icon: <FiHardDrive />, id: 'storage' },
+    { name: 'Sales Trends', icon: <FiDollarSign />, id: 'sales' },
+    { name: 'Category Targets', icon: <FiTarget />, id: 'targets' }
+  ];
+
+  // Hardware metrics data (fallback if no data)
+  const hardwareMetrics = [
+    { title: 'CPU Inventory', value: 50, change: '+10%', trend: 'up', target: 100 },
+    { title: 'RAM Stock', value: 30, change: '-5%', trend: 'down', target: 50 },
+    { title: 'Storage Units', value: 40, change: '+20%', trend: 'up' },
+    { title: 'Defect Rate', value: '2%', change: '+1%', trend: 'up' }
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Navbar /> 
-      <div className="max-w-7xl mx-auto pt-24 px-4">
-        {/* Header with simple fade animation */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-center mb-12"
+    <div className={`flex h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Mobile Sidebar Backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-20 bg-black bg-opacity-50 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <AnimatePresence>
+        <motion.aside
+          initial="closed"
+          animate={sidebarOpen ? "open" : "closed"}
+          variants={sidebarVariants}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className={`fixed md:relative z-30 w-64 h-full ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}
         >
-          <h1 className="text-3xl font-extrabold sm:text-4xl">
-            Sustainable Tech Marketplace
-          </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl">
-            High-quality recycled and refurbished components
-          </p>
-        </motion.div>
-
-        {/* Search and Filter - no animation */}
-        <ProductFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
-          categories={categories}
-        />
-
-        {/* Products Grid with simple fade */}
-        {sortedProducts.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ProductGrid
-              products={sortedProducts}
-              wishlist={wishlist}
-              toggleWishlist={toggleWishlist}
-              addToCart={addToCart}
-            />
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-center py-12"
-          >
-            <h3 className="text-xl font-medium mb-2">No products found</h3>
-            <p className="text-gray-400">Adjust your search criteria</p>
-          </motion.div>
-        )}
-
-        {/* Cart Preview with simple bounce */}
-        {cart.length > 0 && !showCart && (
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500 }}
-          >
-            <CartPreview cart={cart} setShowCart={setShowCart} />
-          </motion.div>
-        )}
-
-        {/* Cart Modal */}
-        {showCart && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-md bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white mr-2">
+                <FiCpu size={18} />
+              </div>
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">HardwarePulse</span>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
-              <CartModal
-                showCart={showCart}
-                closeModal={closeModal}
-                cart={cart}
-                products={products}
-                removeFromCart={removeFromCart}
-                updateQuantity={updateQuantity}
-                cartTotal={cartTotal}
-                setShowCheckout={setShowCheckout}
-              />
-            </motion.div>
+              <FiX size={20} />
+            </button>
           </div>
-        )}
 
-        {/* Checkout Modal */}
-        {showCheckout && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.2 }}
-              className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center border-b pb-4 border-gray-700">
-                  <h2 className="text-2xl font-bold">Checkout</h2>
-                  <button 
-                    onClick={closeModal}
-                    className="text-gray-400 hover:text-gray-300 transition-colors"
+          <nav className="p-4">
+            <ul className="space-y-1">
+              {menuItems.map((item) => (
+                <motion.li
+                  key={item.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <button
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full text-left flex items-center p-3 rounded-lg transition-all ${
+                      activeTab === item.id
+                        ? 'bg-gradient-to-r from-blue-500/10 to-purple-600/10 text-blue-600 dark:text-blue-400 border-l-4 border-blue-500'
+                        : darkMode 
+                          ? 'hover:bg-gray-700 text-gray-300' 
+                          : 'hover:bg-gray-100 text-gray-700'
+                    }`}
                   >
-                    <FaTimes size={20} />
+                    <motion.span
+                      animate={{
+                        color: activeTab === item.id 
+                          ? darkMode ? '#60A5FA' : '#3B82F6'
+                          : darkMode ? '#CBD5E1' : '#64748B',
+                        scale: activeTab === item.id ? 1.1 : 1
+                      }}
+                      transition={{ type: 'spring', stiffness: 500 }}
+                      className="mr-3"
+                    >
+                      {item.icon}
+                    </motion.span>
+                    <span className="font-medium">{item.name}</span>
+                  </button>
+                </motion.li>
+              ))}
+            </ul>
+          </nav>
+        </motion.aside>
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navigation */}
+        <motion.header
+          animate={{ 
+            y: scrolled ? -5 : 0,
+            backdropFilter: scrolled ? 'blur(10px)' : 'none',
+            backgroundColor: scrolled 
+              ? darkMode ? 'rgba(17, 24, 39, 0.8)' : 'rgba(249, 250, 251, 0.8)'
+              : darkMode ? 'rgb(17, 24, 39)' : 'rgb(249, 250, 251)',
+            boxShadow: scrolled ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+          }}
+          transition={{ duration: 0.3 }}
+          className={`fixed w-full z-20 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+        >
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="mr-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 md:hidden"
+              >
+                <FiMenu size={20} />
+              </button>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
+                Hardware Dashboard
+              </h1>
+            </div>
+
+            <div className="flex items-center space-x-4 ml-auto">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                {darkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setHasNotifications(false)}
+                  className="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 relative"
+                >
+                  <FiBell size={20} />
+                  {hasNotifications && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"
+                    />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center space-x-2 focus:outline-none"
+                >
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
+                      <FiUser size={16} />
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-white dark:border-gray-800"></span>
+                  </div>
+                  <span className="hidden md:inline text-gray-700 dark:text-gray-300">Hardware Team</span>
+                  <FiChevronDown className={`transition-transform ${userMenuOpen ? 'transform rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-50 ${
+                        darkMode ? 'bg-gray-800' : 'bg-white'
+                      } border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                    >
+                      <a
+                        href="#"
+                        className={`block px-4 py-2 text-sm ${
+                          darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Your Profile
+                      </a>
+                      <a
+                        href="#"
+                        className={`block px-4 py-2 text-sm ${
+                          darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Settings
+                      </a>
+                      <a
+                        href="#"
+                        className={`block px-4 py-2 text-sm ${
+                          darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Sign out
+                      </a>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </motion.header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto pt-16 pb-4 px-4 md:px-6">
+          {/* Filter Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className={`flex flex-wrap items-center justify-between mb-6 p-4 rounded-xl ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            } shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+          >
+            <div className="flex items-center space-x-2">
+              <FiFilter className="text-gray-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filters:</span>
+            </div>
+            <div className="flex space-x-2">
+              <button className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                This Month
+              </button>
+              <button className="px-3 py-1 text-sm rounded-full bg-blue-500 text-white">
+                All Categories
+              </button>
+              <button className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                By Warehouse
+              </button>
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="flex items-center text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              <FiRefreshCw className="mr-1" /> Refresh Data
+            </button>
+          </motion.div>
+
+          {/* Hardware Metrics Cards */}
+          <motion.div
+            ref={ref}
+            initial="hidden"
+            animate={controls}
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          >
+            {hardwareMetrics.map((metric, index) => (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                className={`p-6 rounded-xl shadow-sm ${
+                  darkMode ? 'bg-gray-800' : 'bg-white'
+                } border ${darkMode ? 'border-gray-700' : 'border-gray-200'} relative overflow-hidden`}
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{metric.title}</h3>
+                <div className="flex items-end justify-between">
+                  <p className="text-2xl font-bold text-gray-800 dark:text-white">{metric.value}</p>
+                  <span className={`flex items-center text-sm font-medium ${
+                    metric.trend === 'up' 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : metric.trend === 'down'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-yellow-600 dark:text-yellow-400'
+                  }`}>
+                    {metric.change}
+                    {metric.trend === 'up' ? (
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                      </svg>
+                    ) : metric.trend === 'down' ? (
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    ) : null}
+                  </span>
+                </div>
+                {metric.target && (
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <span>Progress</span>
+                      <span>{Math.round((metric.value / metric.target) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(metric.value / metric.target) * 100}%` }}
+                        transition={{ duration: 1, type: 'spring' }}
+                        className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
+                      />
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <React.Suspense fallback={<div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className={`p-6 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Inventory Levels</h3>
+                  <button className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400">
+                    View All
                   </button>
                 </div>
+                <div className="h-64">
+                  <InventoryChart darkMode={darkMode} data={mockData.inventoryLevels} />
+                </div>
+              </motion.div>
+            </React.Suspense>
 
-                {orderSuccess ? (
-                  <OrderSuccess formData={formData} closeModal={closeModal} />
-                ) : (
-                  <>
-                    <CheckoutProgress checkoutStep={checkoutStep} />
-                    
-                    {checkoutStep === 1 && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ShippingForm
-                          formData={formData}
-                          handleInputChange={handleInputChange}
-                          nextStep={nextStep}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
+            <React.Suspense fallback={<div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className={`p-6 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Sales Trends</h3>
+                  <button className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400">
+                    View All
+                  </button>
+                </div>
+                <div className="h-64">
+                  <SalesChart darkMode={darkMode} data={mockData.salesTrends} />
+                </div>
+              </motion.div>
+            </React.Suspense>
+          </div>
 
-                    {checkoutStep === 2 && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <PaymentMethod
-                          paymentMethod={paymentMethod}
-                          setPaymentMethod={setPaymentMethod}
-                          formData={formData}
-                          handleCardNumberChange={handleCardNumberChange}
-                          handleInputChange={handleInputChange}
-                          handleExpiryChange={handleExpiryChange}
-                          prevStep={prevStep}
-                          nextStep={nextStep}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
-
-                    {checkoutStep === 3 && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <OrderReview
-                          formData={formData}
-                          paymentMethod={paymentMethod}
-                          cart={cart}
-                          cartTotal={cartTotal}
-                          prevStep={prevStep}
-                          submitOrder={submitOrder}
-                          isProcessing={isProcessing}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
-                  </>
-                )}
+          {/* Full Width Chart */}
+          <React.Suspense fallback={<div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse"></div>}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className={`p-6 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} mb-8`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Category Distribution</h3>
+                <button className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400">
+                  View Details
+                </button>
+              </div>
+              <div className="h-80">
+                <CategoryChart darkMode={darkMode} data={mockData.categoryDistribution} />
               </div>
             </motion.div>
-          </div>
-        )}
+          </React.Suspense>
+
+          {/* Recent Inventory Changes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className={`p-6 rounded-xl shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Recent Inventory Changes</h3>
+              <button className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400">
+                See All
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Component</th>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Category</th>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Change</th>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Status</th>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {mockData.recentChanges.map((change, i) => (
+                    <tr key={i}>
+                      <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
+                        darkMode ? 'text-white' : 'text-gray-800'
+                      }`}>{change.component}</td>
+                      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
+                        darkMode ? 'text-gray-300' : 'text-gray-800'
+                      }`}>{change.category}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                        {change.change}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          change.status === 'Received'
+                            ? darkMode 
+                              ? 'bg-green-900 text-green-200' 
+                              : 'bg-green-100 text-green-800'
+                            : change.status === 'Shipped'
+                              ? darkMode 
+                                ? 'bg-yellow-900 text-yellow-200' 
+                                : 'bg-yellow-100 text-yellow-800'
+                              : darkMode 
+                                ? 'bg-blue-900 text-blue-200' 
+                                : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {change.status}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>{change.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </main>
       </div>
     </div>
   );
 };
 
-export default ProductsPage;
+export default SalesDashboard;
