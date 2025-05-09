@@ -3,31 +3,21 @@ import { Link } from "react-router-dom";
 
 const Footer = ({ toggleDarkMode, darkMode }) => {
     return (
-        <footer className={`relative overflow-hidden ${darkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-800 to-gray-900"} text-gray-300 py-16`}>
-            {/* Decorative elements */}
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-teal-500 opacity-10 blur-3xl"></div>
-            <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-purple-500 opacity-10 blur-3xl"></div>
-            
-            <div className="container mx-auto px-6 lg:px-8 max-w-7xl relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-                    {/* Brand section with animated logo */}
-                    <div className="group">
-                        <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse mb-6">
-                            <div className="relative">
-                                <svg 
-                                    xmlns="http://www.w3.org/2000/svg" 
-                                    viewBox="0 0 24 24" 
-                                    fill="currentColor" 
-                                    className="w-10 h-10 text-teal-400 group-hover:text-teal-300 transition-colors duration-500 transform group-hover:rotate-12"
-                                >
-                                    <path d="M10.464 8.746c.227-.18.497-.311.786-.394v2.795a2.252 2.252 0 01-.786-.393c-.394-.313-.546-.681-.546-1.004 0-.323.152-.691.546-1.004zM12.75 15.662v-2.824c.347.085.664.228.921.421.427.32.579.686.579.991 0 .305-.152.671-.579.991a2.534 2.534 0 01-.921.42z" />
-                                    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.816a3.836 3.836 0 00-1.72.756c-.712.566-1.112 1.35-1.112 2.178 0 .829.4 1.612 1.113 2.178.502.4 1.102.647 1.719.756v2.978a2.536 2.536 0 01-.921-.421l-.879-.66a.75.75 0 00-.9 1.2l.879.66c.533.4 1.169.645 1.821.75V18a.75.75 0 001.5 0v-.81a4.124 4.124 0 001.821-.749c.745-.559 1.179-1.344 1.179-2.191 0-.847-.434-1.632-1.179-2.191a4.122 4.122 0 00-1.821-.75V8.354c.29.082.559.213.786.393l.415.33a.75.75 0 00.933-1.175l-.415-.33a3.836 3.836 0 00-1.719-.755V6z" clipRule="evenodd" />
-                                </svg>
-                                <div className="absolute inset-0 rounded-full border-2 border-teal-400 opacity-0 group-hover:opacity-100 animate-ping duration-1000"></div>
-                            </div>
-                            <span className="self-center text-2xl font-bold text-white whitespace-nowrap bg-clip-text bg-gradient-to-r from-teal-400 to-purple-500">
-                                IWB
-                            </span>
+        <footer className="bg-gray-900 text-gray-300 py-12">
+            <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <Link to="/" className="flex items-center space-x-3 rtl:space-x-reverse mb-4">
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                viewBox="0 0 24 24" 
+                                fill="currentColor" 
+                                className="w-8 h-8 text-teal-500"
+                            >
+                                <path d="M10.464 8.746c.227-.18.497-.311.786-.394v2.795a2.252 2.252 0 01-.786-.393c-.394-.313-.546-.681-.546-1.004 0-.323.152-.691.546-1.004zM12.75 15.662v-2.824c.347.085.664.228.921.421.427.32.579.686.579.991 0 .305-.152.671-.579.991a2.534 2.534 0 01-.921.42z" />
+                                <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.816a3.836 3.836 0 00-1.72.756c-.712.566-1.112 1.35-1.112 2.178 0 .829.4 1.612 1.113 2.178.502.4 1.102.647 1.719.756v2.978a2.536 2.536 0 01-.921-.421l-.879-.66a.75.75 0 00-.9 1.2l.879.66c.533.4 1.169.645 1.821.75V18a.75.75 0 001.5 0v-.81a4.124 4.124 0 001.821-.749c.745-.559 1.179-1.344 1.179-2.191 0-.847-.434-1.632-1.179-2.191a4.122 4.122 0 00-1.821-.75V8.354c.29.082.559.213.786.393l.415.33a.75.75 0 00.933-1.175l-.415-.33a3.836 3.836 0 00-1.719-.755V6z" clipRule="evenodd" />
+                            </svg>
+                            <span className="self-center text-2xl font-bold text-white whitespace-nowrap">IWB</span>
                         </Link>
                         <p className="text-gray-400 mb-4">
                             Innovative Wealth Builders - Pioneering e-waste solutions in Southern Africa.
@@ -75,11 +65,11 @@ const Footer = ({ toggleDarkMode, darkMode }) => {
                         </h3>
                         <ul className="space-y-3">
                             {[
-                                { name: "RAM Recycling", icon: "💾" },
-                                { name: "Hard Drive Processing", icon: "🖴" },
-                                { name: "Motherboard Components", icon: "🖥️" },
-                                { name: "Secure Data Destruction", icon: "🔒" },
-                                { name: "Cloud Solutions", icon: "☁️" }
+                                "RAM Recycling",
+                                "Hard Drive Processing",
+                                "Motherboard Components",
+                                "Secure Data Destruction",
+                                "Cloud Solutions"
                             ].map((service) => (
                                 <li key={service.name} className="flex items-start">
                                     <span className="text-xl mr-3" aria-hidden="true">{service.icon}</span>
@@ -171,7 +161,7 @@ const Footer = ({ toggleDarkMode, darkMode }) => {
                         {/* Dark mode toggle with better animation */}
                         <button
                             onClick={toggleDarkMode}
-                            className={`p-2 rounded-full ${darkMode ? "bg-gray-700 text-teal-400" : "bg-gray-200 text-gray-700"} transition-all duration-500 transform hover:scale-110`}
+                            className="text-gray-400 hover:text-teal-400 transition-colors duration-200"
                             aria-label="Toggle dark mode"
                         >
                             {darkMode ? (
