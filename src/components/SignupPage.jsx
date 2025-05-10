@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FaGoogle, FaUserPlus, FaUserShield, FaUserTie, FaUserCog, FaEnvelope, FaSpinner } from 'react-icons/fa';
+import { FaGoogle, FaUserPlus, FaUserShield, FaUserTie, FaUserCog, FaEnvelope, FaSpinner, FaCheckCircle } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
@@ -16,14 +16,16 @@ const Signup = () => {
     SALES: 'sales',
     FINANCE: 'finance',
     INVESTOR: 'investor',
-    PARTNER: 'partner'
+    PARTNER: 'partner',
+    CLIENT: 'client'
   };
 
   const ROLE_DESCRIPTIONS = {
     [ROLES.SALES]: 'Sales Personnel (Max 3) - Can access sales records',
     [ROLES.FINANCE]: 'Finance Personnel (Max 3) - Can access income statements',
     [ROLES.INVESTOR]: 'Investor - Read-only income statements',
-    [ROLES.PARTNER]: 'Partner - Full solution access (except queries)'
+    [ROLES.PARTNER]: 'Partner - Full solution access (except queries)',
+    [ROLES.CLIENT]: 'Client - Regular customer account'
   };
 
   const [formData, setFormData] = useState({
@@ -31,12 +33,12 @@ const Signup = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: ROLES.SALES // Changed default role to SALES
+    role: ROLES.CLIENT // Default role set to CLIENT
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupStatus, setSignupStatus] = useState(null); // null, 'success', or 'requires_verification'
   const [roleCounts, setRoleCounts] = useState(null);
   const fullNameRef = useRef(null);
 
@@ -110,32 +112,70 @@ const Signup = () => {
         role: formData.role
       });
 
-      toast.success(
-        <div className="flex items-center">
-          <FaEnvelope className="text-blue-500 mr-2" size={20} />
-          <span>Account created! Check your email to confirm your account.</span>
-        </div>,
-        {
-          position: "top-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        }
-      );
-      
-      setSignupSuccess(true);
-      
-      setTimeout(() => {
-        navigate('/email-confirmation', { state: { email: formData.email } });
-      }, 3000);
+      // Handle different success cases based on response
+      if (response.data.requiresEmailVerification) {
+        setSignupStatus('requires_verification');
+        toast.success(
+          <div className="flex items-center">
+            <FaEnvelope className="text-blue-500 mr-2" size={20} />
+            <span>Verification email sent! Please check your inbox.</span>
+          </div>,
+          {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          }
+        );
+        
+        // Navigate to email confirmation page after delay
+        setTimeout(() => {
+          navigate('/email-confirmation', { 
+            state: { 
+              email: formData.email,
+              fullName: formData.fullName 
+            } 
+          });
+        }, 3000);
+      } else {
+        // Direct login case (if verification not required)
+        setSignupStatus('success');
+        toast.success(
+          <div className="flex items-center">
+            <FaCheckCircle className="text-green-500 mr-2" size={20} />
+            <span>Account created successfully! Redirecting...</span>
+          </div>,
+          {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          }
+        );
+        
+        // Redirect to dashboard after delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 3000);
+      }
 
     } catch (err) {
       console.error('Signup failed:', err.response?.data || err.message);
-      if (err.response?.data?.message === 'Email already registered') {
+      
+      // Handle specific error cases
+      if (err.response?.data?.message === 'This email is already registered') {
         setErrors({ email: 'Email already exists' });
-        toast.error('Email already registered', {
+        toast.error('Email already registered. Please login instead.', {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      } else if (err.response?.data?.message === 'Invalid role specified') {
+        setErrors({ role: 'Invalid role selected' });
+        toast.error('Please select a valid role', {
           position: "top-center",
           autoClose: 3000,
         });
@@ -159,6 +199,7 @@ const Signup = () => {
       case ROLES.SALES: return <FaUserTie className="mr-2" />;
       case ROLES.FINANCE: return <FaUserShield className="mr-2" />;
       case ROLES.INVESTOR: return <FaUserCog className="mr-2" />;
+      case ROLES.CLIENT: return <FaUserPlus className="mr-2" />;
       default: return <FaUserPlus className="mr-2" />;
     }
   };
@@ -173,14 +214,32 @@ const Signup = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8"
       >
-        {signupSuccess ? (
+        {signupStatus === 'requires_verification' ? (
           <div className="text-center py-8">
             <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4">
               <FaEnvelope className="text-blue-500 dark:text-blue-400 text-4xl" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Check Your Email!</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Verify Your Email</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              We've sent a confirmation link to <span className="font-semibold">{formData.email}</span>.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Didn't receive the email? <button 
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+                onClick={() => handleResendVerification(formData.email)}
+              >
+                Resend verification
+              </button>
+            </p>
+          </div>
+        ) : signupStatus === 'success' ? (
+          <div className="text-center py-8">
+            <div className="mx-auto w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+              <FaCheckCircle className="text-green-500 dark:text-green-400 text-4xl" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Account Created!</h1>
             <p className="text-gray-600 dark:text-gray-400">
-              We've sent a confirmation link to {formData.email}. Please verify your email to complete registration.
+              You're being redirected to your dashboard...
             </p>
           </div>
         ) : (
@@ -203,7 +262,7 @@ const Signup = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
-                  placeholder="kamohelo mokhethi"
+                  placeholder="John Doe"
                 />
                 {errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
               </div>
@@ -255,6 +314,7 @@ const Signup = () => {
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.role ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
                 >
+                  <option value={ROLES.CLIENT}>Client</option>
                   <option value={ROLES.SALES}>Sales Personnel</option>
                   <option value={ROLES.FINANCE}>Finance Personnel</option>
                   <option value={ROLES.INVESTOR}>Investor</option>
@@ -302,11 +362,37 @@ const Signup = () => {
               <FaGoogle className="text-blue-500 dark:text-blue-400" />
               <span>Continue with Google</span>
             </motion.button>
+
+            <div className="text-center mt-6 text-sm text-gray-600 dark:text-gray-400">
+              Already have an account?{' '}
+              <button 
+                onClick={() => navigate('/login')}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Log in
+              </button>
+            </div>
           </>
         )}
       </motion.div>
     </div>
   );
+};
+
+// Helper function to resend verification email
+const handleResendVerification = async (email) => {
+  try {
+    const response = await axios.post(`${baseUrl}/api/auth/resend-verification`, { email });
+    toast.success('Verification email resent successfully!', {
+      position: "top-center",
+      autoClose: 3000,
+    });
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Failed to resend verification email', {
+      position: "top-center",
+      autoClose: 3000,
+    });
+  }
 };
 
 export default Signup;
