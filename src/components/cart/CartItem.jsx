@@ -1,61 +1,70 @@
-import { FaTrash } from 'react-icons/fa';
-import CurrencyFormatter from '../shared/CurrencyFormatter';
+// components/cart/CartItem.jsx
+import { motion } from 'framer-motion';
+import { FaTimes, FaPlus, FaMinus } from 'react-icons/fa';
 
 const CartItem = ({ 
   item, 
-  products, 
-  removeFromCart, 
-  updateQuantity 
+  products = [], 
+  onRemove, 
+  onUpdateQuantity 
 }) => {
+  // Safely find the product
+  const product = products.find(p => p.id === item.id) || item;
+
   return (
-    <div className="py-4 flex flex-col sm:flex-row">
-      <div className="flex-shrink-0">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex items-center py-4 border-b border-gray-200"
+    >
+      <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden mr-4">
         <img 
-          src={item.image} 
-          alt={item.name}
-          className="h-24 w-24 object-cover rounded"
+          src={product.image} 
+          alt={product.name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.src = '/placeholder-product.jpg';
+            e.target.className = 'w-full h-full object-contain p-2 bg-gray-100';
+          }}
         />
       </div>
-      <div className="mt-4 sm:mt-0 sm:ml-6 flex-grow">
-        <div className="flex justify-between">
-          <h3 className="text-lg font-medium">{item.name}</h3>
-          <button 
-            onClick={() => removeFromCart(item.id, item.quantity)}
-            className="text-gray-400 hover:text-red-500"
-          >
-            <FaTrash />
-          </button>
-        </div>
-        <p className="mt-1 text-sm">{item.category}</p>
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center">
-            <button 
-              onClick={() => updateQuantity(item.id, item.quantity - 1, item.quantity)}
-              className="px-2 py-1 border rounded-l-md border-gray-600 bg-gray-700 text-white"
-            >
-              -
-            </button>
-            <span className="px-4 py-1 border-t border-b border-gray-600 text-white">
-              {item.quantity}
-            </span>
-            <button 
-              onClick={() => updateQuantity(item.id, item.quantity + 1, item.quantity)}
-              disabled={products.find(p => p.id === item.id)?.stock <= 0}
-              className={`px-2 py-1 border rounded-r-md border-gray-600 ${
-                products.find(p => p.id === item.id)?.stock <= 0
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-700 text-white'
-              }`}
-            >
-              +
-            </button>
-          </div>
-          <p className="text-lg font-medium">
-            <CurrencyFormatter amount={item.price * item.quantity} />
-          </p>
-        </div>
+
+      <div className="flex-1">
+        <h3 className="font-medium text-gray-900">{product.name}</h3>
+        <p className="text-gray-500 text-sm">{product.category}</p>
+        <p className="font-bold text-gray-900 mt-1">R{product.price.toFixed(2)}</p>
       </div>
-    </div>
+
+      <div className="flex items-center">
+        <button
+          onClick={() => onUpdateQuantity(product.id, item.quantity - 1)}
+          disabled={item.quantity <= 1}
+          className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+          aria-label="Decrease quantity"
+        >
+          <FaMinus size={12} />
+        </button>
+        
+        <span className="mx-2 w-8 text-center">{item.quantity}</span>
+        
+        <button
+          onClick={() => onUpdateQuantity(product.id, item.quantity + 1)}
+          className="p-1 text-gray-500 hover:text-gray-700"
+          aria-label="Increase quantity"
+        >
+          <FaPlus size={12} />
+        </button>
+      </div>
+
+      <button
+        onClick={() => onRemove(product.id)}
+        className="ml-4 text-red-500 hover:text-red-700"
+        aria-label="Remove item"
+      >
+        <FaTimes size={16} />
+      </button>
+    </motion.div>
   );
 };
 

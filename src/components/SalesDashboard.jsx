@@ -483,7 +483,7 @@ const SalesDashboard = () => {
                       }`}>Deal #{i + 1001}</td>
                       <td className={`px-4 py-3 whitespace-nowrap text-sm ${
                         darkMode ? 'text-slate-300' : 'text-slate-800'
-                      }`}>Client {['Acme Inc', 'Globex Corp', 'Initech', 'Umbrella', 'Wayne Ent'][i]}</td>
+                      }`}>Client {['Acme Inc', 'Globex Corp', 'Initech', 'Umbrella', 'Wayne Ent'][i ]}</td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                         M{(i + 1) * 12500}.00
                       </td>

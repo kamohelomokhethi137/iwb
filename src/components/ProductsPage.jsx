@@ -1,520 +1,384 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FaTimes, FaMemory, FaProjectDiagram, FaHdd, FaMicrochip } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FaMemory, 
+  FaProjectDiagram, 
+  FaHdd, 
+  FaMicrochip,
+  FaLaptop,
+  FaShoppingCart,
+  FaHeart,
+  FaRegHeart,
+  FaSearch,
+  FaTimes
+} from 'react-icons/fa';
 import Navbar from './Layout/Navbar';
 import ProductFilters from './products/ProductFilters';
-import ProductGrid from './products/ProductGrid';
 import CartPreview from './cart/CartPreview';
 import CartModal from './cart/CartModal';
-import CheckoutProgress from './checkout/CheckoutProgress';
-import ShippingForm from './checkout/ShippingForm';
-import PaymentMethod from './checkout/PaymentMethod';
-import OrderReview from './checkout/OrderReview';
-import OrderSuccess from './checkout/OrderSuccess';
-import MotherImage from '../assets/mother.jpg';
-import SSDImage from '../assets/ssd.jpg';
-import CPUImage from '../assets/cpu.jpg';
+import CheckoutFlow from './checkout/CheckoutFlow';
+import LoadingSpinner from './ui/LoadingSpinner';
+import ErrorMessage from './ui/ErrorMessage';
 
-// Preload images
-const preloadImages = () => {
-  const images = [MotherImage, SSDImage, CPUImage];
-  images.forEach(src => {
-    const img = new Image();
-    img.src = src;
-  });
+const API_BASE_URL = 'https://iwb-server.onrender.com';
+
+const categoryIcons = {
+  RAM: <FaMemory className="text-blue-500" size={24} />,
+  Motherboards: <FaProjectDiagram className="text-purple-500" size={24} />,
+  Storage: <FaHdd className="text-yellow-500" size={24} />,
+  Processors: <FaMicrochip className="text-red-500" size={24} />,
+  Laptops: <FaLaptop className="text-green-500" size={24} />
 };
 
-// Product data with initial stock values (5 items)
-const initialProducts = [
-  {
-    id: 1,
-    name: "DDR4 RAM 16GB (Used)",
-    category: "RAM",
-    price: 899.99,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80",
-    description: "16GB DDR4 RAM modules tested and certified for performance.",
-    stock: 5,
-    categoryIcon: <FaMemory className="text-blue-500" size={24} />
-  },
-  {
-    id: 2,
-    name: "Refurbished Motherboard",
-    category: "Motherboards",
-    price: 1750.50,
-    rating: 4.2,
-    image: MotherImage,
-    description: "Various models available. Fully tested with warranty.",
-    stock: 5,
-    categoryIcon: <FaProjectDiagram className="text-purple-500" size={24} />
-  },
-  {
-    id: 3,
-    name: "1TB SSD (Refurbished)",
-    category: "Storage",
-    price: 685.99,
-    rating: 4.0,
-    image: SSDImage,
-    description: "1TB SSD with full diagnostic testing.",
-    stock: 5,
-    categoryIcon: <FaHdd className="text-yellow-500" size={24} />
-  },
-  {
-    id: 4,
-    name: "Intel Core i7 CPU",
-    category: "Processors",
-    price: 1175.00,
-    rating: 4.3,
-    image: CPUImage,
-    description: "Tested processors with excellent value.",
-    stock: 5,
-    categoryIcon: <FaMicrochip className="text-red-500" size={24} />
-  },
-];
-
-// Simplified animation variants
 const fadeIn = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.3 } }
 };
 
-const slideIn = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+const ProductCard = ({ 
+  product, 
+  onAddToCart, 
+  onToggleWishlist, 
+  isInWishlist 
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      key={product.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 relative"
+    >
+      <div className="relative">
+        <img 
+          src={product.image} 
+          alt={product.name}
+          className="w-full h-48 object-cover transition-opacity duration-300"
+          style={{ opacity: isHovered ? 0.9 : 1 }}
+          onError={(e) => {
+            e.target.src = '/placeholder-product.jpg';
+            e.target.className = 'w-full h-48 object-contain p-4 bg-gray-100';
+          }}
+        />
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleWishlist(product.id);
+          }}
+          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md z-10"
+          aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          {isInWishlist ? (
+            <FaHeart className="text-red-500" />
+          ) : (
+            <FaRegHeart className="text-gray-400 hover:text-red-400" />
+          )}
+        </button>
+        {product.stock <= 0 && (
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+            <span className="bg-white px-3 py-1 rounded-full text-sm font-bold">
+              Out of Stock
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <div className="flex items-center mb-2">
+          {product.categoryIcon}
+          <span className="ml-2 text-sm text-gray-600">{product.category}</span>
+        </div>
+
+        <h3 className="font-bold text-lg mb-1 line-clamp-1">{product.name}</h3>
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+
+        <div className="flex justify-between items-center mb-3">
+          <span className="font-bold text-lg">R{product.price.toFixed(2)}</span>
+          <div className="flex items-center">
+            <span className="text-yellow-500">★</span>
+            <span className="ml-1 text-sm">{product.rating.toFixed(1)}</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onAddToCart(product)}
+          disabled={product.stock <= 0}
+          className={`w-full py-2 rounded-md font-medium transition-colors ${
+            product.stock > 0
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+const ProductGrid = ({ products, onAddToCart, onToggleWishlist, wishlist }) => {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onAddToCart={onAddToCart}
+          onToggleWishlist={onToggleWishlist}
+          isInWishlist={wishlist.includes(product.id)}
+        />
+      ))}
+    </div>
+  );
 };
 
 const ProductsPage = () => {
-  // Preload images on component mount
-  useEffect(() => {
-    preloadImages();
-  }, []);
-
-  // State and data initialization
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortOption, setSortOption] = useState('featured');
+  const [sortOption, setSortOption] = useState('newest');
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
-  const [showCart, setShowCart] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showCartModal, setShowCartModal] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderError, setOrderError] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [products, setProducts] = useState(initialProducts);
-  
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    address: '',
-    city: '',
-    postalCode: '',
-    country: 'South Africa',
-    cardNumber: '',
-    cardName: '',
-    expiry: '',
-    cvv: ''
-  });
 
-  // Get unique categories
-  const categories = ['All', ...new Set(products.map(product => product.category))];
+  // Memoized fetch function
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE_URL}/api/products`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      
+      const data = await response.json();
+      const productsWithIcons = data.products.map(product => ({
+        ...product,
+        id: product._id || product.id,
+        categoryIcon: categoryIcons[product.category] || null,
+        createdAt: product.createdAt || new Date().toISOString()
+      }));
+      
+      setProducts(productsWithIcons);
+      setFilteredProducts(productsWithIcons);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // Filter products based on search and category
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortOption === 'price-low') return a.price - b.price;
-    if (sortOption === 'price-high') return b.price - a.price;
-    if (sortOption === 'rating') return b.rating - a.rating;
-    return a.id - b.id; // Default sort (featured)
-  });
-
-  // Add to cart and reduce stock
-  const addToCart = (product) => {
-    if (product.stock <= 0) return;
-
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        if (existingItem.quantity >= product.stock) return prevCart;
-        return prevCart.map(item =>
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
-      } else {
-        return [...prevCart, { ...product, quantity: 1 }];
+  // Filter and sort products
+  useEffect(() => {
+    let result = [...products];
+    
+    // Category filter
+    if (selectedCategory !== 'All') {
+      result = result.filter(p => p.category === selectedCategory);
+    }
+    
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(term) || 
+        p.description.toLowerCase().includes(term)
+      );
+    }
+    
+    // Sort
+    result.sort((a, b) => {
+      switch (sortOption) {
+        case 'price-low': return a.price - b.price;
+        case 'price-high': return b.price - a.price;
+        case 'rating': return b.rating - a.rating;
+        default: return new Date(b.createdAt) - new Date(a.createdAt);
       }
     });
 
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-      )
-    );
-  };
+    setFilteredProducts(result);
+  }, [products, selectedCategory, searchTerm, sortOption]);
 
-  // Remove from cart and restore stock
-  const removeFromCart = (productId, quantity) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === productId ? { ...p, stock: p.stock + quantity } : p
-      )
-    );
-  };
+  // Cart operations
+  const addToCart = useCallback((product) => {
+    if (product.stock <= 0) return;
+    
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => 
+          item.id === product.id 
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  }, []);
 
-  // Update quantity and adjust stock
-  const updateQuantity = (productId, newQuantity, oldQuantity) => {
+  const removeFromCart = useCallback((productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+  }, []);
+
+  const updateCartItem = useCallback((productId, newQuantity) => {
     if (newQuantity < 1) return;
-    
-    const stockChange = newQuantity - oldQuantity;
-    const product = products.find(p => p.id === productId);
-    
-    if (stockChange > 0 && product.stock < stockChange) return;
-
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
+    setCart(prev =>
+      prev.map(item =>
+        item.id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
+  }, []);
 
-    setProducts(prevProducts =>
-      prevProducts.map(p =>
-        p.id === productId ? { ...p, stock: p.stock - stockChange } : p
-      )
-    );
-  };
-
-  // Toggle wishlist
-  const toggleWishlist = (productId) => {
+  const toggleWishlist = useCallback((productId) => {
     setWishlist(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId) 
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
+  }, []);
+
+  // Clear cart after successful checkout
+  const clearCart = () => {
+    setCart([]);
   };
 
-  // Calculate total
+  // Calculate totals
   const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const categories = ['All', ...new Set(products.map(p => p.category))];
 
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Format card number as user types
-  const handleCardNumberChange = (e) => {
-    let value = e.target.value.replace(/\s+/g, '');
-    if (value.length > 16) value = value.substr(0, 16);
-    value = value.replace(/(\d{4})/g, '$1 ').trim();
-    setFormData(prev => ({ ...prev, cardNumber: value }));
-  };
-
-  // Format expiry date as user types
-  const handleExpiryChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 4) value = value.substr(0, 4);
-    if (value.length > 2) value = value.replace(/(\d{2})(\d{0,2})/, '$1/$2');
-    setFormData(prev => ({ ...prev, expiry: value }));
-  };
-
-  // Submit order to backend
-  const submitOrder = async () => {
-    setIsProcessing(true);
-    setOrderError('');
-    
-    try {
-      const orderData = {
-        customer: formData,
-        payment: {
-          method: paymentMethod,
-          ...(paymentMethod === 'card' && {
-            cardLastFour: formData.cardNumber.slice(-4),
-            cardType: getCardType(formData.cardNumber)
-          })
-        },
-        items: cart,
-        total: cartTotal,
-        date: new Date().toISOString()
-      };
-
-      console.log('Order submitted:', orderData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setOrderSuccess(true);
-      setCart([]);
-      setIsProcessing(false);
-      
-    } catch (error) {
-      console.error('Order error:', error);
-      setOrderError('Failed to process order. Please try again.');
-      setIsProcessing(false);
-    }
-  };
-
-  // Determine card type
-  const getCardType = (number) => {
-    const num = number.replace(/\s+/g, '');
-    if (/^4/.test(num)) return 'Visa';
-    if (/^5[1-5]/.test(num)) return 'Mastercard';
-    if (/^3[47]/.test(num)) return 'American Express';
-    return 'Unknown';
-  };
-
-  // Separate validation functions for each step
-  const validateShipping = () => {
-    if (!formData.firstName || !formData.lastName) {
-      return 'Please enter your full name';
-    }
-    if (!formData.email || !/^\S+@\S+\.\S+$/.test(formData.email)) {
-      return 'Please enter a valid email address';
-    }
-    if (!formData.address || !formData.city || !formData.postalCode) {
-      return 'Please complete your shipping address';
-    }
-    return null;
-  };
-
-  const validatePayment = () => {
-    if (paymentMethod === 'card') {
-      if (!formData.cardNumber || formData.cardNumber.replace(/\s+/g, '').length < 16) {
-        return 'Please enter a valid card number (16 digits)';
-      }
-      if (!formData.cardName) {
-        return 'Please enter the name on your card';
-      }
-      if (!formData.expiry || !/^\d{2}\/\d{2}$/.test(formData.expiry)) {
-        return 'Please enter a valid expiry date (MM/YY)';
-      }
-      if (!formData.cvv || formData.cvv.length < 3) {
-        return 'Please enter a valid CVV (3-4 digits)';
-      }
-    }
-    return null;
-  };
-
-  // Updated checkout navigation
-  const nextStep = () => {
-    let error = null;
-    
-    if (checkoutStep === 1) {
-      error = validateShipping();
-    } else if (checkoutStep === 2) {
-      error = validatePayment();
-    }
-
-    if (error) {
-      setOrderError(error);
-      return;
-    }
-    
-    setCheckoutStep(prev => prev + 1);
-    setOrderError('');
-  };
-
-  const prevStep = () => {
-    setCheckoutStep(prev => prev - 1);
-    setOrderError('');
-  };
-
-  const resetCheckout = () => {
-    setShowCheckout(false);
-    setCheckoutStep(1);
-    setOrderSuccess(false);
-    setOrderError('');
-  };
-
-  const closeModal = () => {
-    setShowCart(false);
-    if (showCheckout) resetCheckout();
+  // Clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSelectedCategory('All');
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <Navbar /> 
-      <div className="max-w-7xl mx-auto pt-24 px-4">
-        {/* Header with optimized animation */}
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <main className="max-w-7xl mx-auto px-4 py-24">
         <motion.div 
           initial="hidden"
           animate="visible"
           variants={fadeIn}
           className="text-center mb-12"
         >
-          <h1 className="text-3xl font-extrabold sm:text-4xl">
+          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-3">
             Sustainable Tech Marketplace
           </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             High-quality recycled and refurbished components
           </p>
         </motion.div>
 
-        {/* Search and Filter - no animation */}
         <ProductFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
           categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          sortOption={sortOption}
+          onSortChange={setSortOption}
+          onClear={clearSearch}
         />
 
-        {/* Products Grid with optimized animation */}
-        {sortedProducts.length > 0 ? (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-          >
-            <ProductGrid
-              products={sortedProducts}
-              wishlist={wishlist}
-              toggleWishlist={toggleWishlist}
-              addToCart={addToCart}
-            />
-          </motion.div>
-        ) : (
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            className="text-center py-12"
-          >
-            <h3 className="text-xl font-medium mb-2">No products found</h3>
-            <p className="text-gray-400">Adjust your search criteria</p>
-          </motion.div>
-        )}
-
-        {/* Cart Preview with optimized animation */}
-        {cart.length > 0 && !showCart && (
-          <motion.div
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'tween', ease: 'easeOut', duration: 0.2 }}
-          >
-            <CartPreview cart={cart} setShowCart={setShowCart} />
-          </motion.div>
-        )}
-
-        {/* Cart Modal */}
-        {showCart && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={slideIn}
-              className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              <CartModal
-                showCart={showCart}
-                closeModal={closeModal}
-                cart={cart}
-                products={products}
-                removeFromCart={removeFromCart}
-                updateQuantity={updateQuantity}
-                cartTotal={cartTotal}
-                setShowCheckout={setShowCheckout}
-              />
-            </motion.div>
+        {loading ? (
+          <div className="flex justify-center mt-12">
+            <LoadingSpinner size="lg" />
           </div>
-        )}
-
-        {/* Checkout Modal */}
-        {showCheckout && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={slideIn}
-              className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center border-b pb-4 border-gray-700">
-                  <h2 className="text-2xl font-bold">Checkout</h2>
+        ) : error ? (
+          <ErrorMessage 
+            message={`Error loading products: ${error}`}
+            onRetry={fetchProducts}
+          />
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <FaSearch className="mx-auto text-gray-400 text-4xl mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No products found</h3>
+            <p className="text-gray-500 mt-1">
+              {searchTerm || selectedCategory !== 'All' ? (
+                <>
+                  Try adjusting your search or 
                   <button 
-                    onClick={closeModal}
-                    className="text-gray-400 hover:text-gray-300 transition-colors"
+                    onClick={clearSearch}
+                    className="text-blue-600 hover:text-blue-800 ml-1"
                   >
-                    <FaTimes size={20} />
+                    clear filters
                   </button>
-                </div>
-
-                {orderSuccess ? (
-                  <OrderSuccess formData={formData} closeModal={closeModal} />
-                ) : (
-                  <>
-                    <CheckoutProgress checkoutStep={checkoutStep} />
-                    
-                    {checkoutStep === 1 && (
-                      <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={slideIn}
-                      >
-                        <ShippingForm
-                          formData={formData}
-                          handleInputChange={handleInputChange}
-                          nextStep={nextStep}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
-
-                    {checkoutStep === 2 && (
-                      <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={slideIn}
-                      >
-                        <PaymentMethod
-                          paymentMethod={paymentMethod}
-                          setPaymentMethod={setPaymentMethod}
-                          formData={formData}
-                          handleCardNumberChange={handleCardNumberChange}
-                          handleInputChange={handleInputChange}
-                          handleExpiryChange={handleExpiryChange}
-                          prevStep={prevStep}
-                          nextStep={nextStep}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
-
-                    {checkoutStep === 3 && (
-                      <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={slideIn}
-                      >
-                        <OrderReview
-                          formData={formData}
-                          paymentMethod={paymentMethod}
-                          cart={cart}
-                          cartTotal={cartTotal}
-                          prevStep={prevStep}
-                          submitOrder={submitOrder}
-                          isProcessing={isProcessing}
-                          orderError={orderError}
-                        />
-                      </motion.div>
-                    )}
-                  </>
-                )}
-              </div>
-            </motion.div>
+                </>
+              ) : (
+                "We couldn't find any products matching your criteria"
+              )}
+            </p>
           </div>
+        ) : (
+          <ProductGrid
+            products={filteredProducts}
+            onAddToCart={addToCart}
+            onToggleWishlist={toggleWishlist}
+            wishlist={wishlist}
+          />
         )}
-      </div>
+      </main>
+
+      <CartPreview 
+        itemCount={cartItemCount}
+        total={cartTotal}
+        onShowCart={() => setShowCartModal(true)}
+      />
+
+      <AnimatePresence>
+        {showCartModal && (
+          <CartModal
+            cart={cart}
+            products={products}
+            total={cartTotal}
+            onClose={() => setShowCartModal(false)}
+            onRemoveItem={removeFromCart}
+            onUpdateQuantity={updateCartItem}
+            onCheckout={() => {
+              setShowCartModal(false);
+              if (cart.length > 0) {
+                setShowCheckout(true);
+              }
+            }}
+            emptyCartMessage={
+              <div className="flex flex-col items-center py-8">
+                <FaShoppingCart className="text-gray-300 text-4xl mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">Your cart is empty</h3>
+                <p className="text-gray-500 mt-1">Start shopping to add items</p>
+                <button
+                  onClick={() => setShowCartModal(false)}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+            }
+          />
+        )}
+      </AnimatePresence>
+
+      <CheckoutFlow
+        cart={cart}
+        cartTotal={cartTotal}
+        showCheckout={showCheckout}
+        setShowCheckout={setShowCheckout}
+        clearCart={clearCart}
+      />
     </div>
   );
 };

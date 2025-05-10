@@ -1,3 +1,4 @@
+import React from 'react';
 import CurrencyFormatter from '../shared/CurrencyFormatter';
 
 const OrderReview = ({ 
@@ -5,10 +6,10 @@ const OrderReview = ({
   paymentMethod, 
   cart, 
   cartTotal, 
-  prevStep, 
-  submitOrder, 
   isProcessing, 
-  orderError 
+  orderError, 
+  handleOrderSubmit,
+  setCheckoutStep 
 }) => {
   const getCardType = (number) => {
     const num = number.replace(/\s+/g, '');
@@ -93,13 +94,13 @@ const OrderReview = ({
 
       <div className="mt-6 flex justify-between">
         <button
-          onClick={prevStep}
+          onClick={() => setCheckoutStep(2)}
           className="bg-gray-700 text-white py-2 px-6 rounded-md hover:bg-gray-600 transition-colors"
         >
           Back
         </button>
         <button
-          onClick={submitOrder}
+          onClick={handleOrderSubmit}
           disabled={isProcessing}
           className={`flex items-center justify-center bg-teal-600 text-white py-2 px-6 rounded-md hover:bg-teal-700 transition-colors ${isProcessing ? 'opacity-75' : ''}`}
         >
