@@ -262,7 +262,7 @@ const Signup = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   className={`w-full px-4 py-2 rounded-lg border ${errors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500`}
-                  placeholder="John Doe"
+                  placeholder="kamohelo mokhethi"
                 />
                 {errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
               </div>
